@@ -1,0 +1,2621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Career Positioning Agent — Generic</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1714;--ink2:#3d3a36;--ink3:#6b6660;
+  --paper:#f5f2ed;--paper2:#ede9e2;--paper3:#e3ded5;
+  --accent:#b5451b;--accent2:#c9522a;
+  --green:#2d6a4f;--green-bg:#f0f7f4;--green-border:#a8d5c2;
+  --amber:#92400e;--amber-bg:#fffbeb;--amber-border:#fcd34d;
+  --blue:#1e3a5f;--blue-bg:#eff6ff;--blue-border:#93c5fd;
+  --red-bg:#fee2e2;--red-border:#fca5a5;--red-text:#991b1b;
+  --border:#ccc7bf;--shadow:0 2px 14px rgba(26,23,20,.09);
+}
+html{font-size:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.header{background:var(--ink);color:var(--paper);padding:26px 40px 22px;border-bottom:3px solid var(--accent)}
+.header h1{font-family:'DM Serif Display',serif;font-size:25px;font-weight:400;letter-spacing:-.3px;margin-bottom:5px}
+.header p{font-size:12.5px;color:#b5b0a8;line-height:1.6;max-width:700px}
+.stepper{display:flex;align-items:center;padding:14px 40px;background:var(--paper2);border-bottom:1px solid var(--border);gap:0;overflow-x:auto}
+.step{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:500;color:var(--ink3);white-space:nowrap}
+.step.active{color:var(--accent)}.step.done{color:var(--green)}
+.step-num{width:21px;height:21px;border-radius:50%;background:var(--paper3);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.step.active .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.done .step-num{background:var(--green);border-color:var(--green);color:#fff}
+.step-arrow{color:var(--border);margin:0 8px;font-size:15px}
+.main{max-width:1120px;margin:0 auto;padding:30px 40px;display:flex;flex-direction:column;gap:22px}
+.card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:26px 30px;box-shadow:var(--shadow)}
+.card-title{font-family:'DM Serif Display',serif;font-size:17px;font-weight:400;margin-bottom:18px;color:var(--ink);display:flex;align-items:center;gap:9px}
+.card-title .num{width:27px;height:27px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;flex-shrink:0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:740px){.grid-2{grid-template-columns:1fr}}
+label.fl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin-bottom:5px}
+.opt-tag{color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0;font-size:11px}
+textarea{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.65;border:1px solid var(--border);border-radius:4px;padding:9px 12px;background:var(--paper);color:var(--ink);resize:vertical;outline:none;transition:border-color .15s}
+textarea:focus{border-color:var(--accent);background:#fff}
+.upload-zone{border:1.5px dashed var(--border);border-radius:4px;padding:18px 14px;text-align:center;cursor:pointer;background:var(--paper);transition:border-color .15s,background .15s;position:relative}
+.upload-zone:hover{border-color:var(--accent);background:#fff}
+.upload-zone.has-file{border-style:solid;border-color:var(--green);background:var(--green-bg)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:20px;margin-bottom:5px}
+.upload-label{font-size:12px;color:var(--ink2);font-weight:500}
+.upload-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.upload-zone.has-file .upload-label{color:var(--green)}
+.btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:9px 18px;border-radius:4px;border:none;cursor:pointer;transition:opacity .15s,transform .1s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.98)}.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover:not(:disabled){background:var(--accent2)}
+.btn-ghost{background:var(--paper2);color:var(--ink2);border:1px solid var(--border)}.btn-ghost:hover:not(:disabled){background:var(--paper3)}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.mode-pills{display:flex;border:1.5px solid var(--border);border-radius:5px;overflow:hidden;width:fit-content}
+.mode-pill{font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;padding:8px 22px;cursor:pointer;border:none;background:var(--paper2);color:var(--ink3);transition:background .15s,color .15s}
+.mode-pill.active{background:var(--ink);color:#fff}
+.level-grid{display:flex;gap:8px;flex-wrap:wrap}
+.level-pill,.type-pill{font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;cursor:pointer;border:1.5px solid var(--border);background:var(--paper2);color:var(--ink3);transition:all .15s}
+.level-pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.type-grid{display:flex;gap:8px;margin-top:10px}
+.type-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:18px}
+.score-box{border:2px solid;border-radius:5px;padding:14px;text-align:center;background:var(--paper);display:flex;flex-direction:column;align-items:center}
+.score-big{font-family:'DM Serif Display',serif;font-size:36px;line-height:1}
+.score-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-top:3px}
+.fit-badge{font-size:10px;font-weight:700;color:#fff;border-radius:3px;padding:2px 8px;margin-top:4px;text-transform:uppercase;letter-spacing:.07em}
+.quality-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+.quality-box{border:1px solid var(--border);border-radius:5px;padding:14px 16px;background:var(--paper)}
+.quality-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);margin-bottom:8px}
+.quality-bar-bg{height:6px;background:var(--paper3);border-radius:3px;overflow:hidden}
+.quality-bar-fill{height:100%;border-radius:3px}
+.quality-score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.quality-score-num{font-family:'DM Serif Display',serif;font-size:22px}
+.quality-note{font-size:11.5px;color:var(--ink3);margin-top:7px;line-height:1.5}
+.section-block{border-top:1px solid var(--paper3);padding-top:16px;margin-top:14px}
+.section-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin-bottom:7px}
+.section-body{font-size:13px;color:var(--ink2);line-height:1.75;white-space:pre-wrap}
+.gate-box{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:5px;padding:18px 20px;display:flex;flex-direction:column;gap:13px}
+.gate-msg{font-size:13px;color:var(--amber);line-height:1.6}
+.ready-box{background:var(--green-bg);border:1px solid var(--green-border);border-radius:5px;padding:14px 18px}
+.note-box{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:4px;padding:11px 14px;font-size:13px;color:var(--blue);line-height:1.6}
+.warn-box{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:4px;padding:11px 14px;font-size:13px;color:var(--amber);line-height:1.6}
+.error-box{background:var(--red-bg);border:1px solid var(--red-border);border-radius:4px;padding:11px 14px;font-size:13px;color:var(--red-text)}
+.tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.tab{font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;padding:9px 16px;cursor:pointer;border:none;background:none;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--ink)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.output-pre{font-family:'Courier New',monospace;font-size:12px;line-height:1.75;white-space:pre-wrap;background:var(--paper);border:1px solid var(--border);border-radius:4px;padding:16px 18px;color:var(--ink);max-height:520px;overflow-y:auto}
+.checkbox-group{display:flex;flex-direction:column;gap:9px}
+.checkbox-item{display:flex;align-items:flex-start;gap:9px;cursor:pointer}
+.checkbox-item input[type=checkbox]{margin-top:2px;accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer}
+.cb-label{font-size:13px;color:var(--ink2);line-height:1.5}
+.cb-sub{font-size:11px;color:var(--ink3)}
+ol.q-list{padding-left:18px;font-size:13px;color:var(--ink2);line-height:1.8}
+ol.q-list li{margin-bottom:3px}
+.loading-bar{width:100%;height:3px;background:var(--paper3);border-radius:2px;overflow:hidden;margin-top:8px}
+.loading-fill{height:100%;background:var(--accent);animation:lp 1.5s ease-in-out infinite;border-radius:2px}
+@keyframes lp{0%,100%{width:15%}50%{width:85%}}
+.gen-progress{display:flex;flex-direction:column;gap:8px;padding:12px 0}
+.gen-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink2)}
+.gen-item .gi-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.gen-item.done{color:var(--green)}.gen-item.error{color:var(--red-text)}
+.regen-section{background:var(--paper2);border:1px solid var(--border);border-radius:5px;padding:18px 20px;margin-top:20px}
+.regen-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px}
+.hidden{display:none!important}
+.storage-bar{background:var(--green-bg);border:1px solid var(--green-border);border-radius:4px;padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--green)}
+.storage-bar.unsaved{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.storage-bar .sb-label{flex:1;font-weight:600}
+.storage-bar .sb-sub{font-size:11px;opacity:.8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <h1>Career Positioning Agent</h1>
+      <p>Provide your materials, describe your target role or select a level, and get tailored career documents. Nothing invented — everything grounded in what you provide.</p>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <input type="text" id="session-title" placeholder="Role · Company  (e.g. Senior PM · Acme Corp)"
+          oninput="document.title = this.value ? this.value + ' — Career Positioning Agent' : 'Career Positioning Agent'"
+          style="font-family:'DM Sans',sans-serif;font-size:12.5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.22);border-radius:4px;color:#f5f2ed;padding:5px 11px;width:320px;outline:none;"
+          onfocus="this.style.borderColor='rgba(181,69,27,0.8)'"
+          onblur="this.style.borderColor='rgba(255,255,255,0.22)'"
+        />
+        <span style="font-size:11px;color:#7a7570">← label this session</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end;flex-shrink:0;padding-top:4px">
+      <button class="btn" id="hdr-save-profile-btn"
+        onclick="saveProfile(this)"
+        style="font-size:11px;padding:5px 14px;background:rgba(255,255,255,0.12);color:#f5f2ed;border:1px solid rgba(255,255,255,0.25);white-space:nowrap;flex-shrink:0">
+        💾 Save Profile
+      </button>
+      <button class="btn hidden" id="hdr-save-answers-btn"
+        onclick="saveAnswersToAboutMe(this)"
+        style="font-size:11px;padding:5px 14px;background:rgba(181,69,27,0.7);color:#fff;border:1px solid rgba(181,69,27,0.9);white-space:nowrap;flex-shrink:0">
+        + Save Answers → About Me
+      </button>
+      <button class="btn btn-ghost" onclick="clearProfile()"
+        title="Clear all saved and pasted materials and start fresh"
+        style="font-size:11px;padding:5px 12px;color:var(--red-text);white-space:nowrap;flex-shrink:0">
+        🗑 Clear cache
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="stepper">
+  <div class="step active" id="step-1"><span class="step-num">1</span> Inputs</div>
+  <div class="step-arrow">›</div>
+  <div class="step" id="step-2"><span class="step-num">2</span> Analysis</div>
+  <div class="step-arrow">›</div>
+  <div class="step" id="step-3"><span class="step-num">3</span> Clarifications</div>
+  <div class="step-arrow">›</div>
+  <div class="step" id="step-4"><span class="step-num">4</span> Outputs</div>
+</div>
+
+<div class="main">
+
+<!-- PHASE 1 -->
+<div id="phase-inputs">
+  <div id="clear-confirm-banner" class="hidden" style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:4px;padding:10px 16px;margin-bottom:14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:10px">
+    <span style="font-size:16px">✓</span>
+    <span><strong>Cache cleared.</strong> All saved and entered materials have been wiped. Paste your materials fresh below.</span>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="num">1</span> Mode & Target Role</div>
+    <div style="margin-bottom:18px">
+      <label class="fl" style="margin-bottom:8px">What are you working on?</label>
+      <div class="mode-pills">
+        <button class="mode-pill active" id="mode-targeted" onclick="setMode('targeted')">Targeting a specific role</button>
+        <button class="mode-pill" id="mode-polish" onclick="setMode('polish')">Polishing my materials</button>
+      </div>
+    </div>
+    <div id="jd-block">
+      <label class="fl">Job Description <span class="opt-tag">(required in this mode)</span></label>
+      <textarea id="role-input" rows="7" placeholder="Paste the full job description — title, company, responsibilities, requirements…"></textarea>
+    </div>
+    <div id="level-block" class="hidden">
+      <label class="fl" style="margin-bottom:8px">Target Level</label>
+      <div class="level-grid">
+        <div class="level-pill" onclick="setLevel('junior',this)">Junior</div>
+        <div class="level-pill" onclick="setLevel('mid',this)">Mid-level</div>
+        <div class="level-pill" onclick="setLevel('senior',this)">Senior</div>
+        <div class="level-pill" onclick="setLevel('director',this)">Director</div>
+        <div class="level-pill" onclick="setLevel('srdirector',this)">Sr. Director</div>
+        <div class="level-pill" onclick="setLevel('vp',this)">VP</div>
+        <div class="level-pill" onclick="setLevel('csuite',this)">C-Suite</div>
+      </div>
+      <label class="fl" style="margin-top:14px;margin-bottom:8px">Role Type</label>
+      <div class="type-grid">
+        <div class="type-pill" onclick="setType('ic',this)">Individual Contributor (IC)</div>
+        <div class="type-pill" onclick="setType('manager',this)">Manager / Leader</div>
+      </div>
+      <!-- Pitch deck positioning prompt — polish mode only -->
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
+        <label class="fl" style="margin-bottom:4px">Pitch Deck — How to Position Yourself <span class="opt-tag">(optional)</span></label>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Tell the deck how to frame your story. E.g. "Emphasise my transition from engineering to product leadership" or "I want to position for operator/GM roles, not pure functional leads." Leave blank to let your materials speak.</div>
+        <textarea id="pitch-positioning-input" rows="3" placeholder="Optional positioning guidance for the pitch deck…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">2</span> Your Materials</div>
+
+    <div id="storage-notice" class="note-box hidden" style="margin-bottom:14px;font-size:12px"></div>
+
+    <div class="grid-2" style="margin-bottom:18px">
+      <div>
+        <label class="fl">About Me <span class="opt-tag" id="about-opt-tag">(required in polish mode; strongly recommended in targeted)</span></label>
+        <textarea id="about-input" rows="11" placeholder="Write freely — career arc, key achievements, what you're proud of, working style, what you want next.&#10;&#10;Include:&#10;• Career history and transitions&#10;• Key projects and outcomes with metrics&#10;• Leadership scope and team size&#10;• Skills and tools&#10;• Anything that didn't make the resume&#10;&#10;More detail = better outputs."></textarea>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label class="fl" id="resume-label">Current Resume <span class="opt-tag" id="resume-opt-tag">(optional if About Me is provided)</span></label>
+          <textarea id="resume-input" rows="5" placeholder="Paste your current resume. Leave blank in polish mode to build from scratch."></textarea>
+        </div>
+        <div>
+          <label class="fl">LinkedIn Profile <span class="opt-tag">(optional — polish mode only)</span></label>
+          <div class="upload-zone" id="li-zone">
+            <input type="file" id="li-file" accept=".pdf,.txt" onchange="handleFile()"/>
+            <div class="upload-icon">📄</div>
+            <div class="upload-label" id="li-file-label">Upload PDF or .txt export</div>
+            <div class="upload-sub">Up to 5MB</div>
+          </div>
+          <textarea id="li-text" rows="3" placeholder="Or paste LinkedIn profile text here…" style="margin-top:8px"></textarea>
+        </div>
+        <!-- Master pitch deck — shown in targeted mode only -->
+        <div id="master-pitch-block">
+          <label class="fl">Master Pitch Deck <span class="opt-tag">(optional — targeted mode)</span></label>
+          <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">Paste your master pitch deck to enrich the tailored resume with your full career narrative. The agent will draw from it alongside your resume and About Me.</div>
+          <textarea id="master-pitch-input" rows="4" placeholder="Paste your master pitch deck text here (generated in Polishing mode)…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Storage bar — below the fields, unobtrusive -->
+    <div id="storage-bar" class="storage-bar hidden" style="margin-bottom:14px">
+      <div style="flex:1"><span class="sb-label" id="storage-label">Profile saved</span> <span class="sb-sub" id="storage-sub"></span></div>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="saveProfile()" id="save-btn">💾 Save</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px" onclick="loadProfile()" id="load-btn">📂 Load</button>
+      <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px;color:var(--red-text)" onclick="clearProfile()">🗑</button>
+    </div>
+
+    <!-- Output selector — rendered dynamically by updateOutputOptions() -->
+    <div style="margin-bottom:18px">
+      <label class="fl" style="margin-bottom:6px">Outputs to Generate</label>
+      <div id="outputs-info-box" class="note-box hidden" style="margin-bottom:10px;font-size:12px"></div>
+      <div class="checkbox-group" id="output-checkboxes"></div>
+      <div class="note-box hidden" id="exec-info" style="margin-top:8px;font-size:12px">Director / VP / C-Suite: Executive Bio available above.</div>
+    </div>
+
+    <!-- Options row -->
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:16px">
+      <label class="checkbox-item" style="cursor:pointer">
+        <input type="checkbox" id="opt-analyze" checked style="accent-color:var(--accent);width:14px;height:14px;margin-top:2px"/>
+        <div>
+          <div class="cb-label">Run fit analysis first</div>
+          <div class="cb-sub">Scores fit, surfaces clarifying questions, gives positioning strategy. Uncheck to skip straight to generation.</div>
+        </div>
+      </label>
+      <label class="checkbox-item" style="cursor:pointer">
+        <input type="checkbox" id="opt-concise" style="accent-color:var(--accent);width:14px;height:14px;margin-top:2px"/>
+        <div>
+          <div class="cb-label">Concise mode</div>
+          <div class="cb-sub">Shorter outputs and analysis. Saves tokens on free-tier accounts.</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-accent" id="analyze-btn" onclick="handleContinue()">Continue →</button>
+      <div id="analyze-loading" class="hidden" style="min-width:200px">
+        <div class="loading-label" id="analyze-label">Analyzing…</div>
+        <div class="loading-bar"><div class="loading-fill"></div></div>
+      </div>
+    </div>
+    <div id="input-error" class="error-box hidden" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- PHASE 2+3 -->
+<div id="phase-analysis" class="hidden">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+      <div class="card-title" style="margin-bottom:0"><span class="num">2</span> <span id="analysis-card-title">Assessment</span></div>
+      <button class="btn btn-ghost" style="font-size:12px" onclick="resetAll()">← Start Over</button>
+    </div>
+    <div id="score-section"><div class="score-grid" id="score-grid"></div></div>
+    <div id="quality-section" class="hidden"><div class="quality-grid" id="quality-grid"></div></div>
+    <div class="section-block">
+      <div class="section-head" id="analysis-label-1">Analysis</div>
+      <div class="section-body" id="role-analysis-text"></div>
+    </div>
+    <div class="section-block">
+      <div class="section-head">Positioning Strategy</div>
+      <div class="section-body" id="positioning-text"></div>
+    </div>
+    <div class="section-block">
+      <div class="section-head">Tone & Style Guidance</div>
+      <div class="section-body" id="tone-text"></div>
+    </div>
+
+    <!-- Role context: salary, location, step-up/pivot — shown in targeted mode only -->
+    <div class="section-block hidden" id="context-section" style="padding-top:12px;margin-top:12px"></div>
+
+    <!-- Evidence map & winning angles — shown in targeted mode only -->
+    <div class="section-block hidden" id="evidence-section">
+      <div class="section-head">JD Match — Evidence Map</div>
+      <div id="evidence-map"></div>
+    </div>
+    <div class="section-block hidden" id="winning-section">
+      <div class="section-head">Lead With These</div>
+      <div id="winning-angles"></div>
+    </div>
+
+    <!-- Positioning angle -->
+    <div class="section-block hidden" id="positioning-angle-section" style="padding-top:12px;margin-top:4px"></div>
+    <!-- Gap analysis -->
+    <div class="section-block hidden" id="gap-section" style="padding-top:12px;margin-top:4px"></div>
+    <!-- Recruiter + HM view -->
+    <div class="section-block hidden" id="rhm-section" style="padding-top:12px;margin-top:4px"></div>
+    <!-- Final recommendation -->
+    <div class="section-block hidden" id="recommendation-section" style="padding:14px 0 4px"></div>
+    <!-- Referral-adjusted view -->
+    <div class="section-block hidden" id="referral-section" style="padding-top:12px;margin-top:4px"></div>
+
+    <!-- Clarifications gate -->
+    <div class="section-block" id="clarify-section">
+      <div class="gate-box">
+        <p class="gate-msg" id="gate-msg"></p>
+        <div>
+          <div class="section-head">Clarifying Questions</div>
+          <ol class="q-list" id="q-list"></ol>
+        </div>
+        <div>
+          <label class="fl">Your Answers</label>
+          <textarea id="clarify-answers" rows="6" placeholder="Answer any or all questions. Be specific — exact metrics, scope, project names, outcomes. These answers become source-of-truth context."></textarea>
+        </div>
+        <div>
+          <label class="fl" style="margin-bottom:8px">Generate which outputs?</label>
+          <div class="checkbox-group" id="gate-out-checks"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-accent" id="gate-reanlyze-btn" onclick="reanalyzeWithAnswers()">Re-analyze with Answers →</button>
+          <button class="btn btn-ghost" id="gate-gen-btn" onclick="gateGenerate()">Generate Now</button>
+          <button class="btn btn-ghost" id="gate-skip-btn" onclick="gateSkip()">Skip & Generate Conservatively</button>
+        </div>
+        <div id="gate-progress" class="gen-progress hidden"></div>
+        <div id="gate-error" class="error-box hidden"></div>
+      </div>
+    </div>
+
+    <!-- Ready (no questions) -->
+    <div class="section-block hidden" id="ready-section">
+      <div class="ready-box">
+        <p style="font-size:13px;color:#166534;margin-bottom:12px" id="ready-msg">Ready to generate.</p>
+        <div style="margin-bottom:12px">
+          <label class="fl" style="margin-bottom:8px">Generate which outputs?</label>
+          <div class="checkbox-group" id="ready-out-checks"></div>
+        </div>
+        <button class="btn btn-accent" id="ready-gen-btn" onclick="readyGenerate()">Generate Outputs →</button>
+        <div id="ready-progress" class="gen-progress hidden"></div>
+        <div id="ready-error" class="error-box hidden"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE 4 -->
+<div id="phase-outputs" class="hidden">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+      <div class="card-title" style="margin-bottom:0"><span class="num">4</span> Your Outputs</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" style="font-size:12px" onclick="copyAll(this)">Copy All</button>
+        <button class="btn btn-ghost" style="font-size:12px" onclick="exportMd()">Export .md</button>
+        <button class="btn btn-danger" style="font-size:12px" onclick="resetAll()">Restart</button>
+      </div>
+    </div>
+
+    <div class="tab-bar" id="out-tabs"></div>
+    <div id="out-panels"></div>
+    <div class="regen-section" id="regen-section">
+      <div class="regen-title" style="margin-bottom:10px">Refine with additional context</div>
+      <button id="merge-btn" class="hidden" onclick="saveAnswersToAboutMe()" style="display:none"></button>
+      <div style="margin-bottom:12px">
+        <label class="fl">Additional Context or Corrections</label>
+        <textarea id="regen-text" rows="4" placeholder="Add missing metrics, correct scope, clarify achievements, or request specific changes.&#10;&#10;To use a specific phrase, put it in quotes: &quot;I built the ML platform from scratch&quot; and the agent will evaluate where it fits best."></textarea>
+      </div>
+      <!-- Output selector and button — hidden until first generation completes -->
+      <div id="regen-controls" class="hidden">
+        <div style="margin-bottom:12px">
+          <label class="fl" style="margin-bottom:8px">Regenerate which outputs?</label>
+          <div class="checkbox-group" id="regen-out-checks"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-accent" id="regen-btn" onclick="regenOutputs()">Regenerate →</button>
+          <button class="btn btn-ghost hidden" id="regen-stop-btn" onclick="stopGeneration()" style="color:var(--red-text);border-color:var(--red-border)">⏹ Stop</button>
+        </div>
+      </div>
+      <!-- Stop button visible during first generation too -->
+      <div class="btn-row hidden" id="first-gen-stop">
+        <button class="btn btn-ghost" onclick="stopGeneration()" style="color:var(--red-text);border-color:var(--red-border)">⏹ Stop generation</button>
+      </div>
+      <div 
+─────────────────────────────────────────────────────────────
+function initAgent() {
+  updateOutputOptions();
+  autoLoadProfile(); // non-blocking — loads saved profile if available
+}
+initAgent();
+</script>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const S = {
+  mode:'targeted', level:'', type:'',
+  role:'', about:'', resume:'', linkedin:'',
+  masterPitch:'', pitchPositioning:'',
+  analysis:null,
+  answers:'',          // accumulates ALL clarifications and corrections across every round
+  askedQuestions:[],   // tracks every question asked so far — never repeat these
+  factInventory:null,  // structured per-role extraction — built once before generation
+  outputs:{}
+};
+let _abortCtrl = null;
+// Per-run prompt cache — built once per generation run, reused across all output calls.
+// Avoids rebuilding ctxBlock (potentially 20k+ chars) for every prompt.
+let _cache = null;
+// Tier detection — starts optimistic (parallel). If a 429 fires during generation,
+// we switch to sequential for the rest of the session. Paid accounts never hit 429
+// and stay parallel permanently. Free accounts switch on first rate limit hit.
+let _useSequential = false;
+function invalidateCache() { _cache = null; _ctxCache = null; }
+function promptCache() {
+  if (_cache) return _cache;
+  const lvl = (S.analysis && S.analysis.detectedLevel) || S.level || 'senior';
+  const typ = (S.analysis && S.analysis.detectedType)  || S.type  || 'ic';
+  const a = S.analysis || {};
+
+  // Build the rich JD context block — surfaces analysis outputs into tailoring prompts
+  // so the model uses the deep role understanding it already generated.
+  const jdContext = a.roleAnalysis ? [
+    'JD UNDERSTANDING FROM ANALYSIS — use these outputs to guide every tailoring decision:',
+    // roleAnalysis is already in ctxBlock via TARGET ROLE — not repeated here to save tokens
+    // Only inject the derived actionable fields the tailoring prompt needs directly
+    a.positioningAngle && a.positioningAngle.leadWith   ? 'Lead with: '    + a.positioningAngle.leadWith   : '',
+    a.positioningAngle && a.positioningAngle.compress   ? 'Compress: '     + a.positioningAngle.compress   : '',
+    a.positioningAngle && a.positioningAngle.cut        ? 'Cut: '          + a.positioningAngle.cut        : '',
+    a.recruiterView    ? 'Recruiter lens: '  + a.recruiterView    : '',
+    a.hiringManagerView? 'HM lens: '         + a.hiringManagerView: '',
+    a.winningAngles && a.winningAngles.length
+      ? 'Winning angles: ' + a.winningAngles.join(' | ') : '',
+    a.evidenceMap && a.evidenceMap.length
+      ? 'Key evidence map: ' + a.evidenceMap.map(e => '[' + e.jdRequirement + ' -> ' + e.candidateProof + ']').join(' | ') : '',
+    a.seriousDomainGaps && a.seriousDomainGaps.length
+      ? 'Serious gaps to handle carefully (do not hide, do not over-expose): ' + a.seriousDomainGaps.join('; ') : '',
+    a.positioningGaps && a.positioningGaps.length
+      ? 'Positioning gaps fixable through tailoring: ' + a.positioningGaps.join('; ') : '',
+    a.interviewRisks && a.interviewRisks.length
+      ? 'Interview risks (de-emphasise in resume — address in interview): ' + a.interviewRisks.join('; ') : '',
+  ].filter(Boolean).join('\n') : '';
+
+  _cache = {
+    lvl, typ,
+    ctx:         ctxBlock(),
+    voice:       levelVoice(lvl, typ),
+    order:       sectionOrder(typ),
+    execMode:    a.isExecLevel ? 'Executive mode: strategic framing, enterprise scope, board visibility where accurate.' : '',
+    positioning: a.positioningStrategy || 'Highlight strongest achievements.',
+    jdContext,
+  };
+  return _cache;
+}
+
+function stopGeneration() {
+  if (_abortCtrl) { _abortCtrl.abort(); _abortCtrl = null; }
+}
+const EXEC_LEVELS = ['director','srdirector','vp','csuite'];
+
+// ─── WRITING STYLE — sent as system prompt, not repeated in every user turn ──
+const STYLE = `WRITING RULES (apply to every word):
+- Matter-of-fact voice. Confident through specificity, not adjectives.
+- Every verb matches what happened. Coordinated≠Owned≠Led. Use the accurate one.
+- Numbers accurate and defensible. Write one–nine, numerals 10+. Use %. Ranges: en dash (10–15%). Dollars: $K.
+- Distinguish delivery scope from org reach. State separately.
+- Bullets: most important info first. Vary sentence length. Oxford comma.
+- ATS-friendly: standard headings only, no tables/icons.
+- Good verbs: led, built, coordinated, partnered, designed, improved, reduced, supported, translated, enabled, managed, delivered, aligned, drove, defined, introduced, shaped, scaled.
+- NEVER use: spearheaded, leveraged, synergy, robust, best-in-class, passionate about, results-driven, streamlined (without specifics), visionary, transformational, world-class, guru, rockstar, elite, thought leader.
+- No semicolons in bullet body text. If you reach for one, split the sentence instead.
+- No three consecutive sentences starting with the same word. Scan every paragraph before finalizing.
+- Voice consistency: use implied first person (no subject, active verb) throughout. Never mix implied and explicit first person within the same document.
+
+AVOID AI WRITING PATTERNS — diagnostic tells that make output read as machine-generated:
+- Sentence length uniformity. Do not write 18-to-24 word sentences one after another. Vary deliberately — a short sentence, then a longer one that earns its length.
+- Not-X-but-Y contrast framing. "This isn't a feature, it's a philosophy." Once is a technique. Twice is a tic. Cut it.
+- Pseudo-profound fragments. Short. Isolated. For faux emphasis. Cut entirely.
+- LinkedIn codas. "And honestly? That's rare." / "Let that sink in." Never. Just stop.
+- Tricolon default. Resist three parallel items, three parallel clauses, three parallel anything. Use two or four when the content calls for it.
+- Abstraction over specifics. Never "solutions" when you can name what the solution was. Never "navigate challenges" when you can name the challenge.
+- Balanced both-sides closers. "While X has clear benefits, it's important to consider Y." Take a position or stop. Don't hedge to the middle on every landing.
+- Vocabulary fingerprints. Delve, underscore, tapestry, navigate, ensure, crucial, multifaceted, in today's fast-paced world. Banned.
+- Setup-payoff openers. "Here's the thing." / "The truth is..." Cut.
+- Colon-as-reveal overuse. "The result: [restatement of previous sentence]." If the colon adds nothing, remove it.
+- Smoothness. The deepest tell is absence of any weird local choices. Don't sand everything flat. Let the writing have texture and some irregularity.`;
+
+const LI_RULES = `LINKEDIN CHARACTER LIMITS (hard — count every character including spaces):
+- Headline: 220 chars max
+- About: 2,600 chars max
+- Each Experience entry: 2,000 chars max
+After each section show: "✓ N/MAX chars" if within limit.
+If over: flag "⚠️ OVER: [section] — N chars, limit X" then show:
+  Option A (tighter): [text] — N/MAX chars
+  Option B (compressed): [text] — N/MAX chars
+No internal tool names, project names, or confidential financials on LinkedIn.`;
+
+// ─── TAILORING RULES — injected into every targeted resume output ─────────────
+const TAILORING_RULES = `ACCURACY RULES — non-negotiable:
+- Every number must come from verified source material. Do not invent or infer subscriber counts, team sizes, or percentages. If a number is not in the source material, omit it.
+- Every verb must match what actually happened. "Coordinated" is not "led." "Contributed to" is not "drove." Do not upgrade verbs.
+- Do not add context or scope not in the source material. If the source says "myFICO division," do not expand it to "organization-wide."
+- Apply all terminology corrections specified in the Candidate Profile exactly. Do not revert corrected terms between drafts.
+- LOCATION IN ROLE HEADER LINES: Use the candidate's personal location from their contact line in the source materials — never the company's office location. If the role is remote, write "[Candidate location] (Remote)". The company's city belongs on the company name line only, if at all. Check every role header before finalizing.
+- ABOUT ME IS NARRATIVE CONTEXT, NOT RESUME COPY: The About Me field is conversational background. Extract the underlying facts from it and rewrite them in professional resume language. Never lift sentences, phrases, or clauses from the About Me verbatim. If the About Me says "The Security team has not wanted any other PM," rewrite the underlying fact ("Retained as the Security team's sole embedded PM for 4+ years") — do not quote or paraphrase the casual phrasing. Every line in the resume must be drafted in resume register, not in the first-person narrative voice of the source material.
+
+FORMAT RULES:
+- No em dashes anywhere in prose. Use commas, periods, or colons instead.
+- No semicolons in bullet body text — split the sentence instead.
+- No smooth AI cadence. Vary sentence length deliberately — short sentences next to long ones. If every sentence is 18-24 words, rewrite.
+- No three consecutive sentences starting with the same word.
+- No vocabulary fingerprints: leverage, ensure, robust, navigate, underscore, spearhead, orchestrate.
+- Consistent tense: present tense for current role, past tense for all prior roles.
+- Voice consistency: implied first person throughout. Never mix with explicit first person.
+
+STRUCTURAL RULES:
+- Two pages maximum.
+- Core Competencies: two to three labeled rows of four to six items each. Not pipe-separated.
+- Profile/Summary: three sentences maximum for most levels. Two sentences for executive roles. See level-specific instructions.
+- Do not duplicate facts across sections.
+- Security bullet for non-security roles: two sentences maximum.
+- Most recent prior role: four to six bullets — do not over-compress.
+
+PRE-DELIVERY CHECKLIST — verify every point before outputting:
+□ Are there any terminology corrections from the Candidate Profile? Verify all are applied.
+□ Are there any em dashes in prose? Remove them.
+□ Are there any semicolons in bullet body text? Remove them.
+□ Does the profile exceed the level-appropriate sentence limit? Cut it.
+□ Are competencies pipe-separated? Restructure to labeled rows.
+□ Does every number have a verified source in the materials? Remove any that do not.
+□ Does any bullet sound like spoken narrative or casual About Me prose? Rewrite in resume register.
+□ No three consecutive sentences start with the same word.
+□ Voice is consistent — implied first person, not mixed.`;
+
+// Subset of TAILORING_RULES for prompts that audit rather than write
+const ACCURACY_RULES = `ACCURACY RULES — non-negotiable:
+- Every number must come from verified source material. Do not invent or infer subscriber counts, team sizes, or percentages. If a number is not in the source material, omit it.
+- Every verb must match what actually happened. "Coordinated" is not "led." "Contributed to" is not "drove." Do not upgrade verbs.
+- Do not add context or scope not in the source material. If the source says "myFICO division," do not expand it to "organization-wide."
+- Apply all terminology corrections specified in the Candidate Profile exactly. Do not revert corrected terms between drafts.
+- LOCATION IN ROLE HEADER LINES: Use the candidate's personal location from their contact line in the source materials — never the company's office location. If the role is remote, write "[Candidate location] (Remote)". The company's city belongs on the company name line only, if at all. Check every role header before finalizing.
+- ABOUT ME IS NARRATIVE CONTEXT, NOT RESUME COPY: The About Me field is conversational background. Extract the underlying facts from it and rewrite them in professional resume language. Never lift sentences, phrases, or clauses from the About Me verbatim. If the About Me says "The Security team has not wanted any other PM," rewrite the underlying fact ("Retained as the Security team's sole embedded PM for 4+ years") — do not quote or paraphrase the casual phrasing. Every line in the resume must be drafted in resume register, not in the first-person narrative voice of the source material.`;
+
+
+function sectionOrder(type) {
+  if (type==='ic') return 'Section order within each role: technical work and individual contributions FIRST, then people/ops.';
+  if (type==='manager') return 'Section order within each role: people leadership and org impact FIRST, then technical scope.';
+  return '';
+}
+function levelVoice(level, type) {
+  if (EXEC_LEVELS.includes(level)) return 'Tone: authentic executive gravitas — strategic framing, enterprise scope, board/exec visibility where accurate. Clear, not jargon. PROFILE: Two sentences maximum. Lead with strategic scope and organizational impact, not years. Skip tool lists — competencies at this level are about judgment and scope.';
+  if (level==='senior' && type==='ic') return 'Tone: deep expertise, measurable personal impact, influence without authority, ownership and judgment. PROFILE: Three sentences. Lead with years and domain. Differentiator second — something genuinely rare, not generic strengths. Current scope third, named concretely.';
+  if (level==='senior' && type==='manager') return 'Tone: people development, team delivery at scale, cross-functional coordination, technical credibility. Show you can engage with the work, not just manage it. PROFILE: Three sentences. Lead with years and domain. Differentiator second. Current scope third.';
+  if (['junior','mid'].includes(level)) return 'Tone: growth trajectory, initiative, concrete individual contributions. Metrics where available. Do not inflate scope — be precise about level. PROFILE: Three sentences. Lead with trajectory and initiative, not just years. Show growth signals: promotions, expanded responsibility, skills acquired.';
+  return '';
+}
+function isConcise() { return document.getElementById('opt-concise') && document.getElementById('opt-concise').checked; }
+
+// ─── CONTEXT BLOCK ────────────────────────────────────────────────────────────
+// Truncation only kicks in at extreme sizes — protects against accidentally
+// pasting entire PDFs. Normal resumes and JDs are well within these limits.
+function truncate(s, n) { return s && s.length > n ? s.substring(0,n)+'…[truncated]' : s; }
+
+
+// Detect quoted phrases or explicit phrase requests in the answers/corrections block.
+// Returns an instruction string to append to the prompt when phrases are found.
+function extractPhraseInstructions(text) {
+  if (!text) return '';
+  const quoted = [...text.matchAll(/"([^"]{5,120})"/g)].map(m=>m[1]);
+  const hasPhraseTrigger = /(use (the |this |these )?phrase|include (the |this )?phrase|phrase[: ]|wording[: ]|say (something like|it like)|call it)/i.test(text);
+  if (quoted.length === 0 && !hasPhraseTrigger) return '';
+  const phrases = quoted.map(p => '"' + p + '"').join(', ');
+  const phrasePart = phrases ? ': ' + phrases : '';
+  return 'PHRASE FITTING INSTRUCTION: The user has provided specific phrasing they want included' + phrasePart + '. Evaluate where each phrase fits most naturally — consider whether it belongs in the summary, a specific role, a bullet, or a skills section. Preserve the intent and wording as closely as possible while keeping the surrounding text natural and consistent with the writing rules. If a phrase cannot be fitted without inventing unsupported facts, note that at the end.';
+}
+
+// _ctxCache is invalidated alongside _cache in invalidateCache()
+let _ctxCache = null;
+
+function ctxBlock() {
+  if (_ctxCache) return _ctxCache;
+  const conciseNote = isConcise() ? '\n[CONCISE MODE: keep outputs tight and efficient]' : '';
+  const phraseNote  = extractPhraseInstructions(S.answers);
+
+  // Use structured fact inventory when available — prevents cross-role synthesis.
+  // Falls back to raw documents when only one is provided or extraction failed.
+  const inv = S.factInventory;
+  const materialsBlock = inv
+    ? 'VERIFIED FACT INVENTORY (source of truth — every bullet must trace to a fact listed here):\n' +
+      JSON.stringify(inv.roles || [], null, 2) +
+      '\n\nUNATTRIBUTED FACTS (use in summary/skills only — never assign to a specific role):\n' +
+      ((inv.unattributed_facts || []).join('\n') || 'none') +
+      '\n\nEDUCATION: ' + ((inv.education || []).join('; ') || 'see materials') +
+      (inv.conflicts && inv.conflicts.length
+        ? '\n\nRESOLVED CONFLICTS (About Me version used):\n' + inv.conflicts.join('\n')
+        : '')
+    : 'ABOUT ME (source of truth — do not invent anything not present here or in clarifications):\n' +
+      truncate(S.about, 10000) +
+      (S.resume ? '\n\nEXISTING RESUME:\n' + truncate(S.resume, 8000) : '');
+
+  _ctxCache = [
+    materialsBlock,
+    S.linkedin && S.mode !== 'targeted' ? '\nLINKEDIN PROFILE:\n' + truncate(S.linkedin, 6000) : '',
+    S.masterPitch && S.mode === 'targeted' ? '\nMASTER PITCH DECK (full career narrative — use to enrich resume positioning and story):\n' + truncate(S.masterPitch, 5000) : '',
+    S.role     ? '\nTARGET ROLE:\n' + truncate(S.role, 4000) : '',
+    // Corrections placed LAST so they are the most recent context before generation.
+    // In long contexts, recency matters — corrections buried mid-context get deprioritised.
+    S.answers  ? '\n\n=== USER CORRECTIONS & CLARIFICATIONS — THESE OVERRIDE EVERYTHING ABOVE ===\n' + truncate(S.answers, 6000) + '\n=== END CORRECTIONS ===' : '',
+    phraseNote, conciseNote
+  ].filter(Boolean).join('\n').trim();
+  return _ctxCache;
+}
+
+// ─── FACT INVENTORY ──────────────────────────────────────────────────────────
+// Runs once before generation when both About Me and Resume are present.
+// Extracts a per-role structured fact list so ctxBlock() passes attributed facts
+// rather than raw docs — eliminating cross-role synthesis by the generation model.
+// Uses Haiku (structured extraction, not creative writing).
+
+function buildFactInventoryPrompt() {
+  return 'Extract a structured fact inventory from the candidate materials.\n\n' +
+    'EXISTING RESUME:\n' + truncate(S.resume, 8000) +
+    '\n\nABOUT ME (may contain additional facts, context, and metrics not in the resume):\n' +
+    truncate(S.about, 8000) +  // 8000 chars captures all role facts; tail is usually style guide narrative
+    (S.answers ? '\n\nCLARIFICATIONS (take precedence over both above):\n' + truncate(S.answers, 4000) : '') +
+    '\n\nRULES:\n' +
+    '- Combine resume facts with About Me facts that clearly belong to each role (same company, matching dates, or explicitly attributed).\n' +
+    '- Facts that cannot be confidently attributed to a specific role go in unattributed_facts. Never guess.\n' +
+    '- Never combine facts across roles.\n' +
+    '- Preserve exact numbers, percentages, dollar amounts, and timeframes — do not paraphrase.\n' +
+    '- If the same fact appears with different numbers in both documents, add to conflicts and use the About Me version.\n\n' +
+    'Return ONLY valid compact JSON:\n' +
+    '{"roles":[{"company":"","title":"","dates":"","facts":[],"metrics":[],"technologies":[],"scope":""}],' +
+    '"unattributed_facts":[],"education":[],"conflicts":[]}';
+}
+
+// Generic JSON caller — parses and lightly repairs any JSON response.
+// Does NOT apply analysis-specific field extraction. Use for non-analysis prompts
+// (e.g. fact inventory) where the schema is completely different.
+async function callJSON(prompt, maxTokens) {
+  const txt = await callAPI(
+    [{role:'user', content:prompt}],
+    maxTokens,
+    MODEL_FAST,
+    'Respond ONLY with a single valid JSON object. No markdown fences, no preamble. ' +
+    'CRITICAL: never use double-quote characters inside string values — rephrase to avoid them. ' +
+    'No newlines inside string values.'
+  );
+  let raw = txt.replace(/\x60\x60\x60json[\n]?/g,'').replace(/\x60\x60\x60[\n]?/g,'').trim();
+  const objM = raw.match(/\{[\s\S]*\}/);
+  let s = objM ? objM[0] : raw;
+  s = s
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, "'")
+    .replace(/([^\\])\n/g, '$1 ')
+    .replace(/\r/g, ' ')
+    .replace(/,\s*([}\]])/g, '$1')
+    .replace(/'([^'\n]{1,80})'\s*:/g, '"$1":');
+  try { return JSON.parse(s); } catch(e) {
+    throw new Error('JSON_PARSE_ERROR: ' + e.message + ' — raw: ' + s.substring(0,200));
+  }
+}
+
+async function buildFactInventory() {
+  if (!S.about || !S.resume) return; // single document — raw text is fine
+  if (S.factInventory) return;       // already built for this input set
+
+  try {
+    const inv = await callJSON(buildFactInventoryPrompt(), 3500);
+    // Validate shape — must have a roles array to be useful
+    if (!inv || !Array.isArray(inv.roles)) {
+      console.warn('Fact inventory returned unexpected shape — falling back to raw documents.');
+      S.factInventory = null;
+      return;
+    }
+    S.factInventory = inv;
+    if (inv.conflicts && inv.conflicts.length > 0) {
+      showNotice(
+        'Found ' + inv.conflicts.length + ' conflicting number(s) between your resume and About Me — About Me version will be used. Review your outputs.',
+        'warn'
+      );
+    }
+    invalidateCache(); // ctxBlock must rebuild using the new inventory
+  } catch(e) {
+    console.warn('Fact inventory failed — using raw documents:', e.message);
+    S.factInventory = null;
+  }
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+// Two-model strategy — correct for any tier, not a free-tier compromise:
+//   Haiku  → analysis + changelog. Fast, cheap, perfectly capable for JSON + short text.
+//   Sonnet → resume, LinkedIn, bio outputs. Quality matters here.
+// Haiku is ~20x cheaper per token, so analysis + changelog cost almost nothing on either tier.
+//
+// Rate limiting: no hardcoded delays. If the API returns 429 (rate limit), we
+// retry with exponential backoff. On paid tiers this almost never fires.
+// On free tiers it handles the limit gracefully without wasting time when not needed.
+const MODEL_FAST   = 'claude-haiku-4-5';  // analysis + changelog
+const MODEL_OUTPUT = 'claude-sonnet-4-6';    // resume + linkedin + bio outputs
+
+async function callAPI(messages, maxTokens, model, systemPrompt) {
+  const body = { model, max_tokens:maxTokens, messages };
+  if (systemPrompt) body.system = systemPrompt;
+  const payload = JSON.stringify(body);
+
+  // Retry up to 3 times on 429 (rate limit) or 529 (overloaded) with exponential backoff.
+  // Any other error throws immediately. No hardcoded delays on happy path.
+  const MAX_RETRIES = 3;
+  let lastErr;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    // Check abort before each attempt
+    if (_abortCtrl && _abortCtrl.signal.aborted) throw new Error('STOPPED');
+    const r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:payload
+      // Note: AbortSignal not passed to fetch — not cloneable in Claude's artifact sandbox.
+      // Cancellation is handled by checking _abortCtrl.signal.aborted before each task.
+    });
+
+    if (r.ok) {
+      const d = await r.json();
+      return d.content.map(b=>b.text||'').join('').trim();
+    }
+
+    if (r.status === 429 || r.status === 529) {
+      const retryAfter = parseInt(r.headers.get('retry-after') || '0', 10);
+      const wait = retryAfter > 0 ? retryAfter * 1000 : (2 ** attempt) * 2000; // 2s, 4s, 8s
+      lastErr = new Error('Rate limited ('+r.status+') — retrying in '+(wait/1000)+'s…');
+      lastErr.isRateLimit = true; // signal to runOutputs to switch to sequential
+      await sleep(wait);
+      continue;
+    }
+
+    let detail = String(r.status);
+    try { const e = await r.json(); detail = e.error?.message || detail; } catch(_){}
+    if (r.status === 401) {
+      throw new Error('AUTH_ERROR: The Anthropic API is not available in this context. Ask Claude to run this file as an artifact in a new conversation, or check that you are using Claude.ai with an active session.');
+    }
+    if (r.status === 403) {
+      throw new Error('ACCESS_ERROR: Access denied. This feature may not be available on your current Claude plan.');
+    }
+    throw new Error('API error '+r.status+': '+detail);
+  }
+  throw lastErr || new Error('Max retries exceeded');
+}
+
+function isAbortError(e) {
+  return e && (e.message === 'STOPPED' || e.name === 'AbortError' || (e.message && e.message.includes('aborted')));
+}
+
+async function callAnalysis(prompt) {
+  const txt = await callAPI(
+    [{role:'user',content:prompt}],
+    4000,
+    MODEL_FAST,
+    'Respond ONLY with a single valid JSON object. No markdown fences, no preamble. ' +
+    'CRITICAL: never use double-quote characters inside string values — rephrase to avoid them. ' +
+    'No newlines inside string values. All strings under 180 chars. ' +
+    'Arrays: evidenceMap max 5 items, winningAngles max 3, clarifyingQuestions max 3.'
+  );
+
+  // Strip fences and trim
+  let raw = txt.replace(/\x60\x60\x60json[\n]?/g,'').replace(/\x60\x60\x60[\n]?/g,'').trim();
+
+  // Extract outermost {} to drop any preamble
+  const objM = raw.match(/\{[\s\S]*\}/);
+  let s = objM ? objM[0] : raw;
+
+  // Structural repairs
+  s = s
+    .replace(/[\u2018\u2019]/g, "'")           // curly single quotes → straight
+    .replace(/[\u201C\u201D]/g, "'")           // curly double quotes → single (safer than ")
+    .replace(/([^\\])\n/g, '$1 ')             // unescaped newlines
+    .replace(/\r/g, ' ')                       // carriage returns
+    .replace(/,\s*([}\]])/g, '$1')             // trailing commas
+    .replace(/'([^'\n]{1,80})'\s*:/g, '"$1":'); // single-quoted keys
+
+  // Attempt 1: direct parse after repairs
+  try { return JSON.parse(s); } catch(_) {}
+
+  // Attempt 2: field-by-field regex extraction.
+  // The JSON is too broken to repair as a whole — extract what we can.
+  // Returns a partial result so the user sees scores and key fields
+  // rather than a blank error screen.
+  const partial = { _partial: true, canProceed: true };
+
+  [['atsScore',60],['recruiterScore',60],['hiringManagerScore',60],['combinedScore',60]]
+    .forEach(([f, def]) => {
+      const m = s.match(new RegExp('"' + f + '"\\s*:\\s*(\\d+)'));
+      partial[f] = m ? parseInt(m[1]) : def;
+    });
+
+  [['isExecLevel',false],['canProceed',true]]
+    .forEach(([f, def]) => {
+      const m = s.match(new RegExp('"' + f + '"\\s*:\\s*(true|false)'));
+      partial[f] = m ? (m[1]==='true') : def;
+    });
+
+  ['atsRationale','recruiterRationale','hiringManagerRationale','detectedLevel',
+   'detectedType','roleAnalysis','positioningStrategy','toneGuidance',
+   'salaryFit','locationFit','applicationContext','recruiterView','hiringManagerView']
+    .forEach(f => {
+      const m = s.match(new RegExp('"' + f + '"\\s*:\\s*"([^"\\\\]{0,250})"'));
+      if (m) partial[f] = m[1];
+    });
+
+  ['evidenceMap','winningAngles','clarifyingQuestions',
+   'disqualifyingGaps','seriousDomainGaps','interviewRisks','positioningGaps','minorGaps',
+   'fatalGaps','rampableGaps']  // legacy names kept for backward compat
+    .forEach(f => {
+      const m = s.match(new RegExp('"' + f + '"\\s*:\\s*(\\[[^\\]]{0,3000}\\])'));
+      if (m) { try { partial[f] = JSON.parse(m[1]); } catch(_) { partial[f] = []; } }
+      else partial[f] = [];
+    });
+
+  // positioningAngle needs special handling — it's an object
+  const paM = s.match(/"positioningAngle"\s*:\s*(\{[^}]{0,600}\})/);
+  if (paM) { try { partial.positioningAngle = JSON.parse(paM[1]); } catch(_) {} }
+
+  // If we recovered at least one score, return partial but block auto-proceed.
+  // A partial result means positioningStrategy, evidenceMap, and jdContext will
+  // be empty or missing — tailoring quality will be degraded. Surface this to the user.
+  if (partial.atsScore || partial.recruiterScore) {
+    partial.canProceed = false; // force user to see the partial notice and retry if needed
+    partial._partial = true;
+    return partial;
+  }
+
+  // Nothing recoverable
+  throw new Error('ANALYSIS_PARSE_ERROR: The analysis model returned malformed JSON. Please try again. If this keeps happening, enable Concise mode.');
+}
+
+async function callOutput(prompt, maxTokens, fast=false) {
+  return callAPI([{role:'user',content:prompt}], maxTokens, fast ? MODEL_FAST : MODEL_OUTPUT, STYLE);
+}
+
+// ─── ANALYSIS PROMPTS ─────────────────────────────────────────────────────────
+function analysisPrompt() {
+  const isT = S.mode==='targeted';
+  const ctx = ctxBlock(); // build once, used in both branches
+  const attrMap = S.factInventory && S.factInventory.roles && S.factInventory.roles.length > 0
+    ? 'ROLE ATTRIBUTION MAP — every fact belongs to exactly one company. Do NOT mix facts across roles:\n' +
+      S.factInventory.roles.map(r => '- ' + r.company + ' (' + r.dates + '): ' + r.title).join('\n') +
+      '\nExample: Attribute every fact and tool to the exact employer it came from.'
+    : '';
+
+  if (isT) {
+    return `You are acting as a senior recruiter, hiring manager, and executive career coach.
+
+Do NOT do a surface-level keyword match. First infer the INTENT of the role, then compare the candidate's actual demonstrated experience against that intent.
+${attrMap ? '\n' + attrMap + '\n' : ''}
+${ctx}
+
+STEP 1 — ROLE INTENT: Identify the actual operating problem, success in 6-12 months, and classify each requirement:
+- True blocker: role cannot function without it
+- Strong signal: differentiates strong candidates
+- Nice to have: positive but not required
+- Aspirational / keyword-heavy: listed but unlikely to be a real filter
+Also identify the primary role type: execution / strategy / technical depth / people leadership / process improvement / product delivery / infrastructure-platform / security-compliance / AI-ML / blend.
+
+STEP 2 — CANDIDATE EVIDENCE: Map to role intent, not keywords. Adjacent evidence that counts:
+technical program management, product-facing delivery, infrastructure and platform modernization, cloud migration, data platform or API delivery, DevOps coordination, security and compliance programs, incident response and root cause analysis, release readiness, dependency and risk management, executive communication, PMO leadership, people leadership, process design and operating model improvement, AI-enabled workflow automation, hands-on engineering background, ability to ramp into new technical domains.
+
+STEP 3 — CALIBRATION RULES (apply before scoring):
+A. Do not label something a disqualifying gap unless the missing requirement makes the candidate clearly unrealistic and the final recommendation would be do not apply.
+B. If several gaps are variations of the same underlying issue, group them and penalize ONCE. Do not double-count. Examples: missing ML, LLM, GPU, and model-serving may all be one AI infrastructure gap. Missing EHR, HIPAA, and clinical workflow may all be one healthcare domain gap.
+C. Separate exact domain match from transferable senior TPM capability. A candidate may be weaker in the exact domain but still strong in the operating model of the role.
+D. For every gap, assess whether adjacency is: strong / moderate / weak / not transferable.
+E. PMO leadership is not automatically positive or negative. For senior IC TPM roles, assess whether PMO content distracts. For Director or org-design roles, assess whether it strengthens. For product roles, evaluate product judgment and customer impact. For infrastructure roles, evaluate technical depth and systems thinking. For security roles, evaluate risk management and audit readiness. For AI roles, evaluate both direct AI experience and practical AI adoption.
+F. Do not let ATS score dominate if a referral is involved. Recruiter and HM interpretation matter more.
+
+STEP 4 — SCORING (calibrate to market reality, full 1-100 range):
+For each score explain what specifically RAISED it AND what specifically LOWERED it.
+Provide both: cold application assessment AND referral-adjusted assessment.
+Calibration: 50=real gaps, 65=moderate/worth a conversation, 75=good fit, 85+=strong match.
+combinedScore=round((atsScore+recruiterScore+hiringManagerScore)/3).
+
+STEP 5 — GAP CLASSIFICATION (use ONLY these labels):
+- disqualifyingGaps: clearly unrealistic, do not apply
+- seriousDomainGaps: apply only with strong adjacent evidence, referral, or motivation
+- interviewRisks: prepare deeply
+- positioningGaps: fixable through tailoring or framing
+- minorGaps: not material
+Do not overstate experience. Do not dismiss adjacent evidence because an exact keyword is missing.
+
+STEP 6 — FINAL RECOMMENDATION:
+Distinguish separately: chance of recruiter conversation / chance of HM screen / chance of offer.
+One of: Strong apply / Apply with tailoring / Apply only with referral / Low-probability reach / Do not apply.
+Also classify: core fit / adjacent fit / stretch fit / poor fit.
+
+Return JSON (all strings under 200 chars, no inner double-quotes, no newlines in values):
+atsScore, atsRationale (1 sentence: raised AND lowered — cold), atsReferralRationale (1 sentence: referral-adjusted),
+recruiterScore, recruiterRationale (1 sentence: raised AND lowered — cold), recruiterReferralRationale,
+hiringManagerScore, hiringManagerRationale (1 sentence: raised AND lowered), combinedScore,
+isExecLevel, detectedLevel (junior|mid|senior|director|srdirector|vp|csuite), detectedType (ic|manager),
+roleAnalysis (1-2 sentences on actual intent — operating problem not job title),
+salaryFit (string or null), locationFit (string or null),
+applicationContext (1-2 sentences: step-up/lateral/pivot + prior app context if mentioned),
+evidenceMap (3-5 {jdRequirement,candidateProof} — quote JD phrase, name actual achievement),
+winningAngles (2-3 short ready-to-use copy strings),
+positioningAngle ({headline, summary, leadWith, compress, cut} each under 120 chars),
+positioningStrategy (1-2 sentences),
+toneGuidance (1 sentence),
+disqualifyingGaps (array — only if truly unrealistic),
+seriousDomainGaps (array — include adjacency strength: strong/moderate/weak),
+interviewRisks (array),
+positioningGaps (array),
+minorGaps (array),
+recruiterView (1-2 sentences — what recruiter flags positively and what gives pause),
+hiringManagerView (1-2 sentences — where HM sees depth and where they probe),
+finalRecommendation (one of: Strong apply / Apply with tailoring / Apply only with referral / Low-probability reach / Do not apply),
+fitClassification (one of: core fit / adjacent fit / stretch fit / poor fit),
+clarifyingQuestions (${S.askedQuestions.length > 0 ? 'not: ' + S.askedQuestions.map((q,i)=>(i+1)+'. '+q).join('; ') + '. ' : ''}max 3, [] if none),
+canProceed (true)`;
+  } else {
+    return `Assess quality of candidate materials for target level.
+TARGET LEVEL: ${S.level} | TYPE: ${S.type==='ic'?'IC':'Manager'}
+${ctx}
+Return JSON keys: isExecLevel (${EXEC_LEVELS.includes(S.level)}), detectedLevel ("${S.level}"), detectedType ("${S.type}"), completenessScore (1-100), completenessNote (1 sentence), toneScore (1-100), toneNote (1 sentence), impactScore (1-100), impactNote (1 sentence), metricsScore (1-100), metricsNote (1 sentence), roleAnalysis (1-2 sentences), positioningStrategy (1-2 sentences), toneGuidance (1 sentence), clarifyingQuestions (two-step filter: (1) in materials — even partially or by implication? Any educational signal = do not ask about credentials. Skip if present. (2) materially changes output? if no, skip. Max 3. [] if none survive), canProceed (true)`;
+  }
+}
+
+function reanalysisPrompt(priorScores) {
+  const isT = S.mode === 'targeted';
+  const ctx = ctxBlock(); // build once, used in both branches
+  const attrMap = S.factInventory && S.factInventory.roles && S.factInventory.roles.length > 0
+    ? 'ROLE ATTRIBUTION MAP — every fact belongs to exactly one company. Do NOT mix facts across roles:\n' +
+      S.factInventory.roles.map(r => '- ' + r.company + ' (' + r.dates + '): ' + r.title).join('\n') +
+      '\nExample: Attribute every fact and tool to the exact employer it came from.'
+    : '';
+
+  // Build the re-analysis context block — prior scores + asked questions
+  const priorBlock = priorScores ? [
+    'PRIOR SCORES — adjust from these, do not re-score from scratch:',
+    `ATS ${priorScores.atsScore} | Recruiter ${priorScores.recruiterScore} | HM ${priorScores.hiringManagerScore} | Combined ${priorScores.combinedScore}`,
+    'Lower a score only if new info reveals a genuine gap. Hold or raise if answers confirm experience.'
+  ].join('\n') : '';
+
+  const askedBlock = S.askedQuestions.length > 0
+    ? 'ALREADY ASKED — do not repeat:\n' + S.askedQuestions.map((q,i)=>`${i+1}. ${q}`).join('\n')
+    : '';
+
+  const prior = [priorBlock, askedBlock].filter(Boolean).join('\n\n');
+
+  if (isT) {
+    return `Re-analyze candidate-role fit with updated context.
+${attrMap ? attrMap+'\n\n' : ''}${prior ? '\n'+prior+'\n' : ''}
+${ctx}
+
+Return same JSON keys as initial analysis: atsScore, atsRationale, recruiterScore, recruiterRationale, hiringManagerScore, hiringManagerRationale, combinedScore, isExecLevel, detectedLevel, detectedType, roleAnalysis, salaryFit, locationFit, applicationContext, evidenceMap, winningAngles, positioningStrategy, toneGuidance, clarifyingQuestions (two-step filter: already in materials? skip. changes output? if no, skip. Never repeat asked questions. Max 3. [] if none survive), canProceed`;
+  } else {
+    return `Re-assess quality of candidate materials with additional context.
+TARGET LEVEL: ${S.level} | TYPE: ${S.type==='ic'?'IC':'Manager'}
+
+${prior}
+
+${ctx}
+
+Reassess each dimension. Only lower a score if the answers reveal a real gap. Hold or raise scores where answers confirm or add detail.
+Return JSON keys: isExecLevel, detectedLevel, detectedType, completenessScore, completenessNote, toneScore, toneNote, impactScore, impactNote, metricsScore, metricsNote, roleAnalysis (1-2 sentences), positioningStrategy (1-2 sentences), toneGuidance (1 sentence), clarifyingQuestions (two-step filter: (1) in materials — even partially/by implication? Educational signal present = no credential questions. (2) materially changes output? if no, skip. Max 3 new. [] if none survive), canProceed (true)`;
+  }
+}
+
+// ─── OUTPUT PROMPTS ───────────────────────────────────────────────────────────
+const JOB_ATTR = 'JOB ATTRIBUTION: Every bullet stays under its original employer. Never move content between jobs. Never merge accomplishments across employers.';
+
+function masterResumePrompt() {
+  const c = promptCache();
+  const isPolish = S.mode==='polish';
+  return `${c.voice}
+${c.order}
+${c.execMode}
+${isPolish?'POLISH MODE: include every role and achievement. Source for future tailoring.':''}
+PAGE LIMIT: ${isPolish?'3 pages max':'2 pages max'}. Roles older than 10 years: one line (company, title, dates). Earlier: "Earlier Experience" — no bullets.
+POSITIONING: ${c.positioning}
+${JOB_ATTR}
+${c.ctx}
+Write a ${isPolish?'comprehensive base':'category master'} resume.
+Output format — use these exact delimiters, in this order:
+
+=== TAILORING DECISIONS ===
+3-5 bullet points covering: (1) role track identified and why, (2) which proof points lead and why, (3) what was compressed or cut and why, (4) how people leadership was positioned and why, (5) any corrections applied from the user. Be specific — name the actual bullets and decisions made.
+=== RESUME ===
+Full resume. Sections: Name/Contact | Professional Summary | Core Competencies | Professional Experience | Earlier Experience (if applicable) | Education & Credentials
+Plain text only inside the resume section. No commentary after the resume.`;
+}
+
+function tailoredResumePrompt() {
+  const c = promptCache();
+  return `${c.voice}
+${c.execMode}
+${TAILORING_RULES}
+PAGE LIMIT: 2 pages max. If content exceeds two pages, compress in this order: (1) shorten Earlier Experience entries first, (2) combine related bullets within the most recent prior role, (3) trim qualitative sentences in the current role that carry no metrics. Never drop a proof point category entirely to hit the page limit — compress within it.
+POSITIONING: ${c.positioning}
+${JOB_ATTR}
+${c.ctx}
+
+CORRECTIONS TAKE ABSOLUTE PRECEDENCE: If the context contains a "USER CORRECTIONS & CLARIFICATIONS" block, read it first and apply every correction before doing anything else. A correction is not a suggestion — it is a factual override. If it says a verb was wrong, change it everywhere it appears. If it says a bullet was inaccurate, rewrite it. If it says something should be removed, remove it. Do not soften, dilute, or partially apply corrections. Do not revert to the original after applying them.
+
+STEP 1 — READ THE JD BEFORE WRITING ANYTHING:
+Do not start from the candidate's resume and ask what fits the JD. Start from the JD and ask what from the candidate's resume answers it.
+
+For every stated requirement in the JD, classify it as:
+- True blocker: role cannot function without it. This must appear prominently.
+- Strong signal: differentiates strong candidates. Feature clearly.
+- Nice to have: positive but not a filter. Include if space allows, do not lead with it.
+- Aspirational / keyword-heavy: listed but unlikely to be a real screen. Mirror the language lightly; do not build structure around it.
+
+Never let a nice-to-have the candidate happens to have displace a true blocker they partially match. Blockers earn the lead. Nice-to-haves fill supporting space.
+
+BUILD VS RUN SIGNAL: Does this JD describe building something new (0-to-1, greenfield, standing up a function) or inheriting and scaling something existing? Frame the profile and early bullets accordingly. New-build roles lead with what was created. Scaling roles lead with what was transformed and what changed.
+
+OPERATING CONTEXT: Before writing, identify explicitly: (1) what problem is this team or function trying to solve, (2) what does success look like in the first 6-12 months, (3) what is the primary capability this role is hired for. Every structural and emphasis decision should trace back to one of these three answers.
+
+${c.jdContext ? c.jdContext + '\n' : ''}
+
+IDENTIFY THE ROLE TRACK — Read the JD before deciding bullet order. Do not apply a fixed sequence.
+
+HOW TO READ THE JD FOR PEOPLE LEADERSHIP PLACEMENT:
+- Leadership/management signals: "manage a team of," "build and lead," "own the function," "develop PMs," "head of," "director," direct reports mentioned. → People leadership moves UP (second or third position).
+- IC signals: "partner with," "drive programs," "senior IC," "individual contributor," no direct reports mentioned. → People leadership goes LAST.
+- Ambiguous JD: default to people leadership in the second half of the bullets — not first, not last.
+
+FOR IC ROLES (individual contributor framing, no direct reports expected):
+People leadership goes last. The role is not hiring for it; featuring it prominently signals the candidate is angling for something other than what is offered.
+- Security/compliance IC roles: Security and compliance work first. AI automation or technical differentiator second. Infrastructure or platform delivery third. Product delivery fourth. People leadership last.
+- Product/consumer-facing IC roles: Product and delivery work first. Design partnership or requirements ownership second. Vendor evaluation third. Security and compliance compressed to 2-3 sentences. People leadership last.
+- Infrastructure/platform IC roles: Infrastructure and platform work first. Security second. Product third. People leadership last.
+- AI/data/automation IC roles: AI and automation work first. AI-enabled product delivery second. Platform or data work third. Cross-functional delivery fourth. Security if relevant. People leadership last.
+- General TPM/PMO IC roles: Core delivery work first. AI automation in top three if present. Compliance and governance mid-section. People leadership last.
+
+FOR LEADERSHIP AND MANAGEMENT ROLES (manages teams, owns a function, Director/Head/VP framing):
+People leadership moves up — second or third position, not last. Hiring managers for these roles are evaluating whether the candidate can run a function, not just execute programs.
+- Director/Head of PMO roles: People leadership second, after the overall scope statement. AI automation third. Delivery proof points follow.
+- Engineering leadership partnership roles: People leadership third, after core delivery and technical depth bullets.
+- General management roles: Read the JD for whether program delivery or people leadership is the primary accountability — lead with whichever the role weights more heavily.
+
+SENIORITY-LEVEL BULLET FRAMING — apply to every bullet in every role entry:
+For junior/mid-level roles: emphasise individual contribution, specific tasks owned, and growth signals. Show what the candidate did personally. Do not inflate scope. Promotions and expanded responsibility are evidence; name them.
+For senior IC roles: emphasise influence without authority, ownership and judgment, technical depth as a differentiator. Show what the candidate drove and shaped beyond their immediate remit. The "why this person over another senior candidate" question should be answerable from the bullets alone.
+For manager/lead roles: shift emphasis to team outcomes, not individual contributions. How many people, what did they deliver, how did they grow. Technical credibility still matters — show engagement with the work, not just management of it.
+For director/head of function roles: strategic framing throughout. What function was built or transformed, what did the org look like before and after. Executive stakeholder relationships. Cross-functional influence. Budget and headcount ownership where accurate and sourced.
+For VP/executive roles: revenue, cost, or organizational impact at the largest defensible scale. Board and executive visibility where it exists. Skip granular tool references — competencies at this level are about judgment and scope.
+
+SOURCE OF TRUTH: About Me and master resume only. No hallucinations. No conflating facts across roles or companies.
+ABOUT ME REGISTER RULE: The About Me is narrative context, not resume copy. Extract the facts — rewrite them in resume language. Never quote, lift, or lightly paraphrase casual sentences from the About Me. Every bullet must be drafted in resume register, regardless of how it reads in the source.
+
+${S.factInventory ? 'FABRICATION RULE: every bullet must trace to a fact, metric, technology, or scope in the VERIFIED FACT INVENTORY above. If it is not there, do not write it.' : ''}
+
+ACCURACY RULES — non-negotiable:
+- Every number must come from verified source material. Do not invent or infer subscriber counts, team sizes, percentages, or dollar amounts. If a number is not explicitly in the source, omit it entirely.
+- Every verb must match what actually happened. "Coordinated" is not "led." "Contributed to" is not "drove." Do not upgrade verbs.
+- Do not add scope or context not in the source material.
+- Ownership language only for work the source materials mark as owned end-to-end.
+- Company names and division names must match the source exactly (e.g. "Acme Corp — Payments Division" not just "Acme Corp").
+- Years of experience in the profile must match the source materials — do not recalculate from dates.
+- Location and work arrangement must match the source materials exactly.
+
+LOCKED VERB FRAMINGS — use the Candidate Profile to identify any locked framings the candidate has specified. Apply them exactly. Common patterns to watch:
+- POC or vendor evaluations: name the collaboration explicitly if the candidate did not work alone.
+- PMO history: if the candidate evolved an existing PMO, never say "built from scratch." If they did build from scratch, say so only if the source confirms it.
+- Promotion language: use the exact title and framing from the source materials. Do not invent or upgrade the promotion event.
+- Title line: use the exact target title from the Candidate Profile. Never use a slash title in a submission version.
+
+LOCKED METRICS — use only figures that appear explicitly in the Candidate Profile's locked metrics section or verified source materials. Never invent, round up, or substitute qualitative language for a number the candidate has not verified. If a metric is not in the source, either omit the number entirely or describe it qualitatively. Do not recalculate years of experience from employment dates — use the figure stated in the Candidate Profile.
+
+PHRASES THAT MUST NEVER APPEAR:
+- "Gained exposure to [anything]" — use the specific verb for what actually happened.
+- Personal anecdotes with no professional relevance: any sentence referencing personal activities (e.g. volunteer work, community events, personal hobbies) that does not demonstrate a professional skill must be cut. If the About Me explains skill development through personal activity, extract only the skill — never the personal context.
+- Any process described as a deliverable without naming a concrete outcome.
+- "Streamlined" without specific before/after numbers.
+- "Ensured" as a standalone verb — say what was verified, confirmed, tracked, or escalated.
+- "Passionate about," "results-driven," "cross-functional leader," "leverage," "synergy" — cut entirely.
+- Negative framing: "only," "just," "limited," "despite," "small team" — reframe positively or omit.
+- Semicolons in bullet body text — this is a hard ban, not a suggestion. A semicolon in a bullet means two bullets. Split every time without exception. Before finalizing, search the entire document for ";" and remove every instance found in bullet or prose body text.
+
+WHAT TO INCLUDE:
+- The current/most recent role is the primary role — give it full depth.
+- Most recent prior role: moderate depth — four to six bullets.
+- Earlier roles: one title line plus one to two sentences. No bullets.
+- Follow the Candidate Profile exactly for: which roles to exclude, how to compress earlier experience, which companies or dates to omit, and any role-specific depth instructions.
+- Never include a role the Candidate Profile marks as excluded, regardless of how it is framed.
+
+CREDENTIALS — use the exact degree names, institution names, and certification titles from the Candidate Profile. Do not paraphrase or abbreviate. Do not include any certification or credential the Candidate Profile marks as excluded or removed.
+
+TITLE LINE: Commit to one level that matches the target role. Do not use a slash title (e.g. "Director / Senior TPM") in any submission version.
+
+COMPETENCIES — two visible layers:
+- Layer 1: Program scope — name only the categories the target role cares about. Do not list every competency from the master. Two to three labeled rows of four to six items each. Not pipe-separated.
+- Layer 2 Tools: two lines. Delivery tools (Jira, Confluence, Airtable, Slack, Jira Webhooks) on one line. Technical tools (AWS, Datadog, SQL/PostgreSQL, Java, React, HTML/CSS) on a separate line. Only include the tool layer if the role cares about tools.
+- EXCLUDED FROM TOOLS — never list these regardless of JD: Python (not a personal skill). Do not add tools not present in the source materials.
+
+FORMAT RULES:
+- No em dashes anywhere in prose. Use commas, periods, or colons instead.
+- No semicolons in bullet body text — split the sentence instead.
+- Vary sentence length deliberately. Short sentences next to long ones. If every sentence is 18-24 words, rewrite.
+- No three consecutive sentences starting with the same word.
+- Banned words: leverage, ensure, robust, navigate, underscore, spearhead, orchestrate.
+- Tense: present tense for current role, past tense for all prior roles.
+
+STRUCTURAL RULES:
+- Profile: see level-specific instructions above (two sentences for exec, three for all other levels).
+- Core Competencies: two to three labeled rows of four to six items each. Not pipe-separated.
+- Do not duplicate facts across sections. If a metric appears in the Profile, remove it from the Experience intro.
+- Security bullet for non-security roles: two sentences maximum.
+- Most recent prior role: four to six bullets — do not over-compress.
+
+PRE-DELIVERY CHECKLIST — verify every item before outputting:
+1. All placeholders resolved — no brackets remaining anywhere in the document.
+2. Credentials appear exactly as specified in the Candidate Profile. Any credential marked as excluded does not appear.
+3. All roles excluded in the Candidate Profile do not appear under any framing.
+4. All numbers match the Candidate Profile's locked metrics — none invented or recalculated from dates.
+5. Locked verb framings from the Candidate Profile are applied exactly throughout.
+6. Any collaborative work (POCs, joint projects) is attributed correctly — the collaboration is named.
+7. PMO framing is accurate per source — "led and evolved" if inherited, "built" only if source confirms it.
+8. "Gained exposure to" does not appear anywhere.
+9. No process described as a deliverable without a named concrete outcome.
+10. Most recent prior role has four to six bullets — not collapsed to a paragraph.
+11. Are there any terminology corrections specified in the Candidate Profile? Verify they are applied throughout.
+12. Does any metric appear more than once? Remove the duplicate.
+13. Are there any em dashes in prose? Remove every one.
+14. Are there any semicolons in bullet body text? Remove every one.
+15. Does the Profile exceed the level-appropriate sentence limit? Cut it.
+16. Are competencies pipe-separated? Restructure to labeled rows.
+17. Title line commits to one level — no slash titles.
+18. People leadership position confirmed: last for IC roles, moved up (2nd or 3rd) for leadership and management roles.
+19. JD was read for direct-reports language before deciding people leadership placement.
+20. Company names and division names match the source exactly.
+20a. Location in every role header line shows the CANDIDATE'S location, not the company's city. Remote roles show "[Candidate location] (Remote)" — never the company's HQ city.
+21. Years of experience match the source — not recalculated from dates.
+22. Location in every role header shows the candidate's personal location, not the company's office city. Remote roles read "[Candidate location] (Remote)".
+23. Ownership language used only for work marked as owned end-to-end in the source.
+24. Is there any negative framing — "only," "just," "limited," "despite," "small"? Remove every instance.
+25. Does any bullet read like spoken narrative or first-person anecdote? Rewrite in resume register.
+26. Sentence length variation confirmed — no cadence uniformity in any paragraph.
+27. No three consecutive sentences start with the same word.
+28. Vocabulary fingerprints scanned and cleared: delve, underscore, tapestry, navigate, ensure, crucial, multifaceted.
+29. Voice consistent throughout — implied first person, no mixing with explicit first person.
+
+Sections: Name/Contact | Professional Summary | Core Competencies | Professional Experience | Earlier Experience (if applicable) | Education & Credentials
+Plain text only.`;
+}
+function linkedinPrompt() {
+  const c = promptCache();
+  return `${c.voice}
+${c.order}
+${LI_RULES}
+POSITIONING: ${c.positioning}
+${c.ctx}
+Write LinkedIn updates: HEADLINE, ABOUT, each EXPERIENCE [Company / Title], SKILLS, FEATURED.
+Show character count after each section. Apply over-limit rules precisely.
+Plain text only.`;
+}
+
+function execBioPrompt() {
+  const c = promptCache();
+  return `${c.voice}
+Executive mode: authentic gravitas. No confidential financials. Not a press release.
+${c.ctx}
+SHORT BIO (~150 words): current role, one or two defining capabilities, education.
+
+LONG BIO (~330 words): career arc, expanded scope pattern, two or three specific capabilities with outcomes, education.
+Plain text only.`;
+}
+
+function pitchDeckPrompt() {
+  const c = promptCache();
+  const isPolish = S.mode==='polish';
+  const lvl = c.lvl;
+  const typ = c.typ;
+
+  // Level-aware audience and framing instructions
+  const LEVEL_FRAMES = {
+    junior:    'Audience: early-career roles. Frame contributions as initiative, growth trajectory, and concrete individual output. Metrics should reflect personal delivery scope.',
+    mid:       'Audience: mid-level individual contributors or team leads. Frame contributions as ownership, reliable delivery, and cross-functional impact. Metrics should reflect project and team-level outcomes.',
+    senior:    typ==='manager'
+               ? 'Audience: senior manager / lead roles. Frame contributions as team performance, org design, and delivery at scale. Metrics should reflect team size, delivery throughput, and business outcomes influenced.'
+               : 'Audience: senior IC roles. Frame contributions as deep expertise, technical ownership, and measurable personal impact. Metrics should reflect scope of systems, scale of users or data, and quality of outcomes.',
+    director:  'Audience: Director and above. Frame contributions as org leadership, cross-functional strategy, and operating model design. Metrics should reflect P&L ownership, headcount, revenue, and multi-team delivery. Board-visible outcomes where accurate.',
+    srdirector:'Audience: Sr. Director and above. Frame contributions as enterprise-scale leadership, multi-function coordination, and strategic transformation. Metrics should reflect budget authority, large-scale headcount, and measurable business impact. Board-visible outcomes where accurate.',
+    vp:        'Audience: VP and above. Frame contributions as enterprise leadership, executive stakeholder alignment, and business transformation. Metrics should reflect significant revenue, org scale (100s of people), and market or company-level outcomes.',
+    csuite:    'Audience: C-Suite and board. Frame contributions as company-defining strategy, market leadership, and cultural/organizational transformation. Metrics should be company-level: revenue, market share, valuation, and transformational milestones.',
+  };
+  const levelFrame = LEVEL_FRAMES[lvl] || LEVEL_FRAMES['senior'];
+
+  const positioningNote = S.pitchPositioning
+    ? `\nPOSITIONING GUIDANCE (from candidate — follow this framing):\n${S.pitchPositioning}`
+    : '';
+
+  return `${c.voice}
+Personal career pitch deck for a senior audience — hiring managers, executive recruiters, and professional network contacts.
+${isPolish ? 'POLISH MODE: this is a master pitch deck — evergreen, not tailored to one role.' : ''}
+LEVEL & TYPE FRAMING: ${levelFrame}
+${positioningNote}
+${c.ctx}
+
+FABRICATION RULE: every claim, metric, and achievement must come directly from the materials above. Do not invent or embellish.
+
+METRICS RULE: surface specific, defensible metrics throughout — numbers, percentages, dollar amounts, team sizes, timeframes. If the materials contain no usable metrics, output a prominent warning block at the very end of your response (after the last slide) formatted exactly as:
+⚠️ METRICS WARNING: No specific metrics were found in the provided materials. Pitch decks for ${lvl}-level roles are significantly weaker without quantified achievements. Consider adding to your About Me: team sizes managed, revenue or budget owned, % improvements delivered, system scale (users/transactions/data volume), project timelines, or hiring/retention outcomes.
+
+5-slide personal career pitch deck:
+
+SLIDE 1 — HERO + CAREER ARC
+Name, current or most recent title, and a one-line positioning statement calibrated for ${lvl}-level audiences.
+2-3 sentences on career trajectory: where you started, the pattern of expanding scope, where you are now. Specific — not generic. Arc should feel earned, not summarised.
+
+SLIDE 2 — EXPERTISE AREAS
+3-4 named capability blocks appropriate for ${lvl} / ${typ==='manager'?'leader':'IC'} positioning. Each: a label (2-4 words) and 1-2 sentences of specific depth. Not a skills list — areas of genuine mastery with evidence.
+
+SLIDE 3 — KEY ACHIEVEMENTS
+4-5 metric-backed highlights. Each a single sentence with a concrete, defensible outcome. Vary domains (delivery, people, technical, commercial) where background supports it. Surface the strongest numbers available.
+
+SLIDE 4 — WHAT I'M LOOKING FOR
+Type of role, level, environment, and impact the candidate wants to have next. Calibrated to ${lvl} level — not aspirational fluff, a clear picture of fit.
+
+SLIDE 5 — CONTACT
+Full name, location, email or LinkedIn if present in materials, one-line invitation to connect.
+
+Format each slide as:
+SLIDE N — [TITLE]
+[content]
+
+Plain text only.`;
+}
+
+function changeLogPrompt(generatedOutputs) {
+  return `Outputs: ${generatedOutputs.join(', ')}. Positioning: ${(S.analysis&&S.analysis.positioningStrategy)||'general improvement'}.${isConcise()?' Be brief.':''}
+CHANGE LOG
+• 5-7 bullets: key changes made and why
+OPTIONAL IMPROVEMENTS
+• 3-4 bullets: things the candidate could add if they genuinely have the experience
+Plain text only.`;
+}
+
+function whatToChangePrompt() {
+  const c = promptCache();
+  return `${c.voice}
+${c.order}
+${c.execMode}
+${ACCURACY_RULES}
+POSITIONING: ${c.positioning}
+${c.ctx}
+${S.answers ? 'CORRECTIONS TAKE ABSOLUTE PRECEDENCE: The USER CORRECTIONS block above contains factual overrides. Every correction must be reflected in your recommendations — flag each corrected item explicitly under the relevant section so the candidate sees exactly what changed and why.' : ''}
+Structured edit guide, section by section.
+For each section: KEEP (already strong), CUT (weakens or irrelevant), ADD/STRENGTHEN (missing or undersold), SUGGESTED LANGUAGE (ready-to-use replacement text).
+Sections: Professional Summary | Core Competencies | each Experience entry | Education.
+Quote existing text when flagging. Provide actual replacement wording.
+End with ATS KEYWORDS TO ADD: 5-8 terms from the JD not yet in the resume.
+${S.factInventory ? 'FABRICATION RULE: only flag changes grounded in the VERIFIED FACT INVENTORY. Do not suggest adding facts that are not there.' : ''}
+Plain text only.`;
+}
+
+// ─── OUTPUT CONFIG ────────────────────────────────────────────────────────────
+// Token budgets: sized for quality while staying within free-tier limits.
+// Concise mode reduces effective output length via the prompt, not token cap.
+const OUTPUT_CONFIG = {
+  master:       { label:'Master Resume',   prompt:masterResumePrompt,   tokens:3000 },
+  tailored:     { label:'Tailored Resume', prompt:tailoredResumePrompt, tokens:3500 },
+  whattochange: { label:'What to Change',  prompt:whatToChangePrompt,   tokens:900  },
+  linkedin:     { label:'LinkedIn Updates',prompt:linkedinPrompt,       tokens:3000 },
+  execbio:      { label:'Executive Bio',   prompt:execBioPrompt,        tokens:1000 },
+  pitchdeck:    { label:'Pitch Deck',      prompt:pitchDeckPrompt,      tokens:1500 },
+};
+// Maps output selectedIds to S.outputs property names
+const KEY_MAP = {master:'masterResume',tailored:'tailoredResume',whattochange:'whatToChange',linkedin:'linkedinUpdates',execbio:'execBio',pitchdeck:'pitchDeck'};
+
+// ─── OUTPUT RUNNER — sequential with 1s gap (avoids free-tier rate limits) ───
+async function runOutputs(selectedIds, progressEl, errorEl) {
+  if (errorEl) { errorEl.textContent=''; errorEl.classList.add('hidden'); }
+  await buildFactInventory(); // no-op if already built or only one document provided
+  invalidateCache();
+  _abortCtrl = new AbortController();
+  setStopBtnsVisible(true);
+
+  const wantChangelog = selectedIds.includes('changelog');
+  const mainIds = selectedIds.filter(id => id !== 'changelog');
+  const tasks = mainIds.map(id => OUTPUT_CONFIG[id] ? {id,...OUTPUT_CONFIG[id]} : null).filter(Boolean);
+
+  if (tasks.length === 0 && !wantChangelog) {
+    showErrEl(errorEl, 'No outputs selected. Please check at least one output and try again.');
+    setStopBtnsVisible(false); _abortCtrl = null;
+    return false;
+  }
+
+  const allLabels = [...tasks.map(t=>t.label), ...(wantChangelog?['Change Log & Improvements']:[])];
+  progressEl.innerHTML = allLabels.map((lbl,i)=>
+    `<div class="gen-item" id="gitem-${i}"><span class="gi-icon">⏳</span> ${lbl}</div>`
+  ).join('');
+  progressEl.classList.remove('hidden');
+
+  const succeeded = [];
+  const taskErrors = []; // collect non-abort errors for the summary message
+  const wasAborted = () => _abortCtrl && _abortCtrl.signal.aborted;
+
+  if (_useSequential) {
+    // Sequential mode — free tier or after a rate limit was detected
+    await _runSequential(tasks, succeeded, taskErrors);
+  } else {
+    // Parallel mode — optimistic start for paid accounts
+    // If any task hits a rate limit, switch to sequential for this and future runs
+    const rateLimitDetected = await _runParallel(tasks, succeeded, taskErrors);
+    if (rateLimitDetected) {
+      _useSequential = true; // remember for future runs this session
+      // Run any tasks that didn't complete yet sequentially
+      const remaining = tasks.filter(t => !succeeded.includes(t.label));
+      if (remaining.length > 0) await _runSequential(remaining, succeeded, taskErrors);
+    }
+  }
+
+  setStopBtnsVisible(false);
+  const aborted = wasAborted();
+  _abortCtrl = null;
+
+  if (!aborted && succeeded.length === 0) {
+    const detail = taskErrors.length > 0
+      ? ' ' + friendlyError(taskErrors[0].message)
+      : ' Please try again.';
+    showErrEl(errorEl, 'Generation failed — nothing was produced.' + detail);
+    return false;
+  }
+
+  if (wantChangelog && succeeded.length > 0) {
+    const logIdx = tasks.length;
+    setGItem(logIdx,'loading','Change Log & Improvements');
+    try {
+      const log = await callOutput(changeLogPrompt(succeeded), 700, true);
+      const split = log.indexOf('OPTIONAL IMPROVEMENTS');
+      S.outputs.changeLog = split>-1 ? log.substring(0,split).replace('CHANGE LOG','').trim() : log.replace('CHANGE LOG','').trim();
+      if (split>-1) S.outputs.optionalImprovements = log.substring(split).replace('OPTIONAL IMPROVEMENTS','').trim();
+      setGItem(logIdx,'done','Change Log & Improvements');
+    } catch(e) {
+      setGItem(logIdx,'error','Change Log — skipped');
+    }
+  }
+
+  return succeeded.length > 0;
+}
+
+// Parallel execution — fires all tasks simultaneously.
+// Returns true if a rate limit was detected (signal to switch to sequential).
+async function _runParallel(tasks, succeeded, taskErrors) {
+  let rateLimitDetected = false;
+
+  const results = await Promise.allSettled(
+    tasks.map((t, i) => {
+      if (_abortCtrl && _abortCtrl.signal.aborted) return Promise.reject(new Error('STOPPED'));
+      setGItem(i, 'loading', t.label);
+      return callOutput(t.prompt(), t.tokens)
+        .then(text => {
+          S.outputs[KEY_MAP[t.id]] = text;
+          succeeded.push(t.label);
+          setGItem(i, 'done', t.label);
+        })
+        .catch(e => {
+          if (e && e.isRateLimit) {
+            rateLimitDetected = true;
+          } else if (!isAbortError(e)) {
+            if (taskErrors) taskErrors.push(e); // surface non-abort errors to caller
+          }
+          setGItem(i, 'error', t.label + ' — ' + (isAbortError(e) ? 'stopped' : friendlyError(e.message||'').substring(0,80)));
+          throw e;
+        });
+    })
+  );
+
+  return rateLimitDetected;
+}
+
+// Sequential execution — one task at a time.
+// Used on free tier or after rate limit detected during parallel run.
+async function _runSequential(tasks, succeeded, taskErrors) {
+  // Tasks may be a subset of the original list (e.g. retry after parallel rate limit).
+  // Resolve the gitem DOM index by task id so progress indicators always update correctly.
+  const allIds = [...document.querySelectorAll('.gen-item')].map((_,i)=>i);
+  const idToGItem = {};
+  document.querySelectorAll('.gen-item').forEach((el,i) => {
+    // gen-items are labelled by position; we match by label text as a fallback
+    idToGItem[el.textContent.trim()] = i;
+  });
+
+  for (let i = 0; i < tasks.length; i++) {
+    if (_abortCtrl && _abortCtrl.signal.aborted) break;
+    const t = tasks[i];
+    // Use label-based lookup to find correct gitem index, fall back to loop index
+    const gIdx = idToGItem[t.label] !== undefined ? idToGItem[t.label] : i;
+    setGItem(gIdx, 'loading', t.label);
+    try {
+      const text = await callOutput(t.prompt(), t.tokens);
+      S.outputs[KEY_MAP[t.id]] = text;
+      succeeded.push(t.label);
+      setGItem(gIdx, 'done', t.label);
+    } catch(e) {
+      if (isAbortError(e)) { setGItem(gIdx, 'error', t.label+' — stopped'); break; }
+      const msg = friendlyError(e.message||'failed').substring(0,100);
+      setGItem(gIdx, 'error', t.label+' — '+msg);
+      if (taskErrors && !isAbortError(e)) taskErrors.push(e);
+    }
+    // No fixed delay — retry backoff in callAPI handles rate limits
+  }
+}
+
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+function setGItem(i,state,label) {
+  const el = document.getElementById('gitem-'+i);
+  if (!el) return;
+  const icons = {done:'✓',error:'✗',loading:'⏳'};
+  el.className = 'gen-item '+(state==='loading'?'':state);
+  el.innerHTML = `<span class="gi-icon">${icons[state]||'⏳'}</span> ${label}`;
+}
+
+// ─── FLOW ─────────────────────────────────────────────────────────────────────
+function handleContinue() {
+  document.getElementById('opt-analyze').checked ? startAnalysis() : skipToGenerate();
+}
+
+function validateInputs() {
+  const about  = document.getElementById('about-input').value.trim();
+  const resume = document.getElementById('resume-input').value.trim();
+  if (S.mode==='targeted') {
+    if (!document.getElementById('role-input').value.trim()) { showErr('input-error','Please paste a job description.'); return false; }
+    // Require at least one of About Me or Resume — either is sufficient for fit analysis
+    if (!about && !resume) { showErr('input-error','Please provide at least one of: About Me or Current Resume. Either is sufficient for fit analysis.'); return false; }
+  }
+  if (S.mode==='polish') {
+    // Polish mode builds from scratch — About Me is the source of truth
+    if (!about) { showErr('input-error','Please fill in the About Me section — it is the source of truth for polishing your materials.'); return false; }
+    if (!S.level) { showErr('input-error','Please select a target level.'); return false; }
+    if (!S.type)  { showErr('input-error','Please select a role type (IC or Manager).'); return false; }
+  }
+  hideErr('input-error');
+  return true;
+}
+
+function collectInputs() {
+  const prevAbout  = S.about;
+  const prevResume = S.resume;
+  S.about    = document.getElementById('about-input').value.trim();
+  S.role     = document.getElementById('role-input').value.trim();
+  S.resume   = document.getElementById('resume-input').value.trim();
+  S.linkedin = document.getElementById('li-text').value.trim();
+  S.masterPitch      = (document.getElementById('master-pitch-input')||{}).value?.trim() || '';
+  S.pitchPositioning = (document.getElementById('pitch-positioning-input')||{}).value?.trim() || '';
+  // Only invalidate the fact inventory if the source documents actually changed.
+  // A regen triggered only by adding corrections should reuse the existing inventory —
+  // the corrections travel via S.answers into the prompt, not via the inventory.
+  if (S.about !== prevAbout || S.resume !== prevResume) {
+    S.factInventory = null;
+  }
+  invalidateCache();
+}
+
+async function startAnalysis() {
+  if (!validateInputs()) return;
+  collectInputs();
+  setBtn('analyze-btn',true);
+  const _al=document.getElementById('analyze-loading'); if(_al){_al.classList.remove('hidden'); const _ll=document.getElementById('analyze-label'); if(_ll)_ll.textContent='Analyzing…';}
+  try {
+    S.analysis = await callAnalysis(analysisPrompt());
+    renderAnalysis(S.analysis);
+  } catch(e) {
+    // Show error on the input panel — we haven't left it yet
+    showErr('input-error', friendlyError(e.message));
+    // Ensure input panel stays visible (don't flip to analysis or outputs)
+    document.getElementById('phase-inputs').classList.remove('hidden');
+    document.getElementById('phase-analysis').classList.add('hidden');
+    document.getElementById('phase-outputs').classList.add('hidden');
+  } finally {
+    setBtn('analyze-btn',false);
+    const _alh=document.getElementById('analyze-loading'); if(_alh)_alh.classList.add('hidden');
+  }
+}
+
+// Re-run analysis with clarifying answers before generating
+async function reanalyzeWithAnswers() {
+  const answers = document.getElementById('clarify-answers').value.trim();
+  if (answers) { S.answers = (S.answers?S.answers+'\n\n':'')+answers; showMergeBtn(); }
+  // Capture prior scores so re-analysis prompt can anchor on them
+  const priorScores = S.analysis ? {
+    atsScore: S.analysis.atsScore,
+    recruiterScore: S.analysis.recruiterScore,
+    hiringManagerScore: S.analysis.hiringManagerScore,
+    combinedScore: S.analysis.combinedScore
+  } : null;
+  hideErr('gate-error');
+  setBtn('gate-reanlyze-btn',true); setBtn('gate-gen-btn',true); setBtn('gate-skip-btn',true);
+  document.getElementById('gate-progress').innerHTML =
+    '<div class="gen-item"><span class="gi-icon">⏳</span> Re-analyzing with your answers…</div>';
+  document.getElementById('gate-progress').classList.remove('hidden');
+  try {
+    const newAnalysis = await callAnalysis(reanalysisPrompt(priorScores));
+    // Normalise clarifyingQuestions before storing (re-analysis path)
+    if (Array.isArray(newAnalysis.clarifyingQuestions)) {
+      newAnalysis.clarifyingQuestions = newAnalysis.clarifyingQuestions
+        .map(q => typeof q === 'string' ? q.trim() : String(q && typeof q==='object' ? (q.question||q.text||q.q||JSON.stringify(q)) : q||'').trim())
+        .filter(q => q.length > 0);
+    }
+    // Attach prior scores to new analysis so renderAnalysis can show the delta
+    newAnalysis._priorScores = priorScores;
+    S.analysis = newAnalysis;
+    renderAnalysis(S.analysis);
+  } catch(e) {
+    showErrEl(document.getElementById('gate-error'), friendlyError(e.message));
+  } finally {
+    setBtn('gate-reanlyze-btn',false); setBtn('gate-gen-btn',false); setBtn('gate-skip-btn',false);
+  }
+}
+
+async function skipToGenerate() {
+  if (!validateInputs()) return;
+  collectInputs();
+  const userCheckedExec = !!(document.getElementById('out-execbio')&&document.getElementById('out-execbio').checked);
+  S.analysis = {
+    isExecLevel: userCheckedExec,
+    detectedLevel: S.level||'senior',
+    detectedType:  S.type||'ic',
+    positioningStrategy: 'Highlight strongest achievements and skills relevant to the target role.',
+    toneGuidance: 'Professional, grounded, specific.',
+  };
+  const defs = outputDefs(userCheckedExec);
+  const initialSel = getSelectedInputOutputs();
+
+  document.getElementById('phase-inputs').classList.add('hidden');
+  document.getElementById('phase-analysis').classList.add('hidden');
+  document.getElementById('phase-outputs').classList.remove('hidden');
+  setStep(4);
+
+  document.getElementById('out-tabs').innerHTML='';
+  document.getElementById('out-panels').innerHTML=`
+    <div style="padding:20px 0">
+      <div style="margin-bottom:14px">
+        <label class="fl" style="margin-bottom:8px">Generate which outputs?</label>
+        <div class="checkbox-group" id="skip-out-checks">${checkboxesHTML(defs,'skip',initialSel)}</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-accent" id="skip-gen-btn" onclick="skipGenerate()">Generate →</button>
+      </div>
+      <div id="skip-progress" class="gen-progress hidden" style="margin-top:12px"></div>
+      <div id="skip-error" class="error-box hidden" style="margin-top:10px"></div>
+    </div>`;
+  document.getElementById('regen-out-checks').innerHTML='';
+  document.getElementById('out-panels').onclick = copyClickHandler;
+}
+
+async function skipGenerate() {
+  const defs=outputDefs(); const sel=getChecked('skip',defs);
+  if (!sel.length) return showErrEl(document.getElementById('skip-error'),'Select at least one output.');
+  setBtn('skip-gen-btn',true);
+  const ok = await runOutputs(sel, document.getElementById('skip-progress'), document.getElementById('skip-error'));
+  setBtn('skip-gen-btn',false);
+  if (ok||Object.keys(S.outputs).length>0) renderOutputs(S.outputs,defs);
+}
+
+// Gate generation — two entry points sharing the same logic
+// gateGenerate: user answered questions, absorb answers before generating
+// gateSkip: skip answers, generate conservatively
+async function gateGenerate() { await _runGate(true);  }
+async function gateSkip()     { await _runGate(false); }
+
+async function _runGate(saveAnswers) {
+  if (saveAnswers) {
+    const txt = document.getElementById('clarify-answers').value.trim();
+    if (txt) { S.answers = (S.answers ? S.answers+'\n\n' : '') + txt; showMergeBtn(); }
+  }
+  const defs = outputDefs();
+  let sel = getChecked('gate', defs);
+  if (!sel.length) sel = defs.filter(d => !UNCHECKED_BY_DEFAULT.has(d.id)).map(d => d.id);
+  if (!sel.length) return showErrEl(document.getElementById('gate-error'), 'Select at least one output.');
+  const gateBtns = ['gate-reanlyze-btn','gate-gen-btn','gate-skip-btn'];
+  gateBtns.forEach(id => setBtn(id, true));
+  const ok = await runOutputs(sel, document.getElementById('gate-progress'), document.getElementById('gate-error'));
+  gateBtns.forEach(id => setBtn(id, false));
+  if (ok || Object.keys(S.outputs).length > 0) renderOutputs(S.outputs, defs);
+}
+
+
+async function readyGenerate() {
+  const defs=outputDefs();
+  let sel=getChecked('ready',defs);
+  if (!sel.length) sel = defs.filter(d=>!UNCHECKED_BY_DEFAULT.has(d.id)).map(d=>d.id);
+  if (!sel.length) return showErrEl(document.getElementById('ready-error'),'Select at least one output.');
+  setBtn('ready-gen-btn',true);
+  const ok = await runOutputs(sel, document.getElementById('ready-progress'), document.getElementById('ready-error'));
+  setBtn('ready-gen-btn',false);
+  if (ok||Object.keys(S.outputs).length>0) renderOutputs(S.outputs,defs);
+}
+
+async function regenOutputs() {
+  // Stop any in-progress generation before starting a new one
+  if (_abortCtrl) { _abortCtrl.abort(); await sleep(100); }
+  // Re-collect inputs in case user edited fields since last run
+  collectInputs();
+  if (!S.about && !S.resume) {
+    return showErrEl(document.getElementById('regen-error'), 'About Me or Resume is empty — please fill in your materials before regenerating.');
+  }
+  const extra = document.getElementById('regen-text').value.trim();
+  // Append new context to accumulated answers — ctxBlock() always sends the full history
+  if (extra) { S.answers = (S.answers?S.answers+'\n\n':'')+extra; showMergeBtn(); }
+  const defs=outputDefs(); const sel=getChecked('regen',defs);
+  if (!sel.length) return showErrEl(document.getElementById('regen-error'),'Select at least one output.');
+  setBtn('regen-btn',true);
+  const ok = await runOutputs(sel, document.getElementById('regen-progress'), document.getElementById('regen-error'));
+  setBtn('regen-btn',false);
+  if (ok||Object.keys(S.outputs).length>0) {
+    renderOutputs(S.outputs,defs);
+    document.getElementById('regen-text').value='';
+  }
+}
+
+// ─── OUTPUT DEFS & CHECKBOXES ─────────────────────────────────────────────────
+function outputDefs(forExec) {
+  const isExec = forExec || (S.analysis&&S.analysis.isExecLevel)
+    || !!(document.getElementById('out-execbio')&&document.getElementById('out-execbio').checked);
+  const isTargeted = S.mode==='targeted';
+  const mode = isTargeted?'targeted':'polish';
+  const defs = [
+    {id:'master',    label:'Master Resume',            sub:'Exhaustive base resume — source for future tailoring',     modes:['polish']},
+    {id:'tailored',     label:'Tailored Resume',   sub:'Full rewrite optimised for this role',           modes:['targeted']},
+    {id:'whattochange', label:'What to Change',  sub:'Section-by-section edit guide — lower cost',     modes:['targeted']},
+    {id:'linkedin',  label:'LinkedIn Updates',         sub:'Section-by-section · Headline 220 · About 2,600 · Role 2,000 chars', modes:['polish']},
+    {id:'execbio',   label:'Executive Bio',            sub:'Short bio (~150 words) and long bio (~330 words)',          modes:['targeted','polish']},
+    {id:'pitchdeck', label:'Pitch Deck',               sub:'5-slide personal career pitch — hero arc, expertise, achievements, goals, contact', modes:['targeted','polish']},
+    {id:'changelog', label:'Change Log & Improvements',sub:'Key changes + optional suggestions (uses fast model)',     modes:['targeted','polish']},
+  ];
+  return defs.filter(d => {
+    if (!d.modes.includes(mode)) return false;
+    if (d.id==='execbio' && !isTargeted && !isExec) return false;
+    return true;
+  });
+}
+
+// changelog unchecked by default; everything else checked by default
+const UNCHECKED_BY_DEFAULT = new Set(['changelog','whattochange']); // whattochange is secondary to tailored
+
+function checkboxesHTML(defs, prefix, defaultSel) {
+  // tailored + whattochange are mutually exclusive — render as a radio group
+  const RADIO_PAIR = ['tailored','whattochange'];
+  const radioDefs = defs.filter(d => RADIO_PAIR.includes(d.id));
+  const otherDefs = defs.filter(d => !RADIO_PAIR.includes(d.id));
+  let out = '';
+
+  if (radioDefs.length > 0) {
+    const selId = defaultSel
+      ? (radioDefs.find(d => defaultSel.includes(d.id))?.id || radioDefs[0].id)
+      : radioDefs[0].id;
+    const grpName = prefix + '-resume_output';
+    out += '<div style="border:1px solid var(--border);border-radius:4px;padding:10px 12px;background:var(--paper);margin-bottom:4px">';
+    out += '<div class="fl" style="margin-bottom:8px;font-size:10px">Resume Output <span class="opt-tag">(choose one)</span></div>';
+    radioDefs.forEach(d => {
+      const sel = d.id === selId ? 'checked' : '';
+      out += `<label class="checkbox-item" style="margin-bottom:6px"><input type="radio" name="${grpName}" id="${prefix}-${d.id}" value="${d.id}" ${sel} style="accent-color:var(--accent);width:14px;height:14px;margin-top:2px;flex-shrink:0"/><div><div class="cb-label">${d.label}</div><div class="cb-sub">${d.sub}</div></div></label>`;
+    });
+    out += '</div>';
+  }
+
+  otherDefs.forEach(d => {
+    const chk = defaultSel ? defaultSel.includes(d.id) : !UNCHECKED_BY_DEFAULT.has(d.id);
+    out += `<label class="checkbox-item"><input type="checkbox" id="${prefix}-${d.id}" ${chk?'checked':''}/><div><div class="cb-label">${d.label}</div><div class="cb-sub">${d.sub}</div></div></label>`;
+  });
+
+  return out;
+}
+
+function getChecked(prefix, defs) {
+  const radioIds = new Set(['tailored','whattochange']);
+  const radioGroupName = prefix + '-resume_output';
+
+  // Read which radio is selected. Default to 'tailored' if:
+  // (a) the radio group for this prefix doesn't exist in the DOM yet, or
+  // (b) somehow nothing is checked — tailored is always the safe default.
+  const checkedRadio = document.querySelector(`input[name="${radioGroupName}"]:checked`);
+  const selectedRadio = checkedRadio
+    ? checkedRadio.value
+    : (defs.some(d => radioIds.has(d.id)) ? 'tailored' : null);
+
+  return defs.filter(d => {
+    if (radioIds.has(d.id)) return d.id === selectedRadio;
+    const el = document.getElementById(prefix+'-'+d.id);
+    return el && el.checked;
+  }).map(d => d.id);
+}
+
+function getSelectedInputOutputs() {
+  // Read radio group for resume output choice
+  const radioChecked = document.querySelector('input[name="out-resume_output"]:checked');
+  const radioVal = radioChecked ? radioChecked.value : 'tailored'; // default to tailored
+
+  const checkboxIds = ['out-master','out-linkedin','out-execbio','out-pitchdeck','out-changelog'];
+  const checkboxMap = {'out-master':'master','out-linkedin':'linkedin','out-execbio':'execbio','out-pitchdeck':'pitchdeck','out-changelog':'changelog'};
+
+  const result = checkboxIds
+    .filter(id => { const el=document.getElementById(id); return el&&el.checked; })
+    .map(id => checkboxMap[id]);
+
+  // Add the selected radio value (tailored or whattochange) if the radio group exists
+  if (document.querySelector('input[name="out-resume_output"]')) {
+    result.unshift(radioVal);
+  }
+
+  return result;
+}
+
+// ─── RENDER ANALYSIS ──────────────────────────────────────────────────────────
+function renderAnalysis(r) {
+  if (r && r._partial) {
+    showNotice('Analysis returned a partial result — some sections may be missing. Try re-running if fields are blank.', 'warn');
+  }
+  document.getElementById('phase-inputs').classList.add('hidden');
+  document.getElementById('phase-analysis').classList.remove('hidden');
+  setStep(3);
+
+  document.getElementById('analysis-card-title').textContent = S.mode==='targeted'?'Fit Assessment':'Quality Assessment';
+
+  if (S.mode==='targeted') {
+    document.getElementById('score-section').classList.remove('hidden');
+    document.getElementById('quality-section').classList.add('hidden');
+    document.getElementById('analysis-label-1').textContent='Role Analysis';
+    const prior = r._priorScores || null;
+    const scores=[
+      {label:'ATS / AI Screening', score:r.atsScore,             prior:prior?.atsScore,             rationale:r.atsRationale},
+      {label:'Human Recruiter',    score:r.recruiterScore,        prior:prior?.recruiterScore,        rationale:r.recruiterRationale},
+      {label:'Hiring Manager',     score:r.hiringManagerScore,    prior:prior?.hiringManagerScore,    rationale:r.hiringManagerRationale},
+      {label:'Combined Score',     score:r.combinedScore,         prior:prior?.combinedScore,         badge:fitLevel(r.combinedScore).label}
+    ];
+    document.getElementById('score-grid').innerHTML=scores.map(s=>{
+      const f=fitLevel(s.score);
+      let delta = '';
+      if (s.prior != null && s.prior !== s.score) {
+        const diff = s.score - s.prior;
+        const col = diff > 0 ? '#22c55e' : '#ef4444';
+        const sign = diff > 0 ? '▲' : '▼';
+        delta = `<div style="font-size:10px;color:${col};margin-top:3px;font-weight:700">${sign} ${Math.abs(diff)} from ${s.prior}</div>`;
+      } else if (s.prior != null) {
+        delta = `<div style="font-size:10px;color:#6b6660;margin-top:3px">— unchanged</div>`;
+      }
+      const rationaleText = s.rationale ? (typeof s.rationale === 'string' ? s.rationale : String(s.rationale)) : '';
+      const rationale = rationaleText ? `<div style="font-size:10px;color:var(--ink3);margin-top:5px;line-height:1.4;padding:0 2px">${esc(rationaleText)}</div>` : '';
+      return `<div class="score-box" style="border-color:${f.color};align-items:flex-start;text-align:left"><div style="display:flex;align-items:center;gap:8px;width:100%"><div class="score-big" style="color:${f.color};flex-shrink:0">${s.score}</div><div style="flex:1"><div class="score-label" style="text-align:left">${s.label}</div>${s.badge?`<div class="fit-badge" style="background:${f.color};display:inline-block">${s.badge}</div>`:''}</div></div>${delta}${rationale}</div>`;
+    }).join('');
+  } else {
+    document.getElementById('score-section').classList.add('hidden');
+    document.getElementById('quality-section').classList.remove('hidden');
+    document.getElementById('analysis-label-1').textContent='Materials Assessment';
+    const dims=[
+      {label:'Completeness',score:r.completenessScore,note:r.completenessNote},
+      {label:'Tone',score:r.toneScore,note:r.toneNote},
+      {label:'Impact Language',score:r.impactScore,note:r.impactNote},
+      {label:'Metrics',score:r.metricsScore,note:r.metricsNote}
+    ];
+    document.getElementById('quality-grid').innerHTML=dims.map(d=>{
+      const f=fitLevel(d.score);
+      return `<div class="quality-box"><div class="quality-label">${d.label}</div><div class="quality-score-row"><span class="quality-score-num" style="color:${f.color}">${d.score}</span><span class="fit-badge" style="background:${f.color};font-size:9px">${f.label}</span></div><div class="quality-bar-bg"><div class="quality-bar-fill" style="width:${d.score}%;background:${f.color}"></div></div><div class="quality-note">${esc(d.note||'')}</div></div>`;
+    }).join('');
+  }
+
+  document.getElementById('role-analysis-text').textContent=typeof r.roleAnalysis==='string'?r.roleAnalysis:(r.roleAnalysis||'');
+  document.getElementById('positioning-text').textContent=typeof r.positioningStrategy==='string'?r.positioningStrategy:(r.positioningStrategy||'');
+  document.getElementById('tone-text').textContent=typeof r.toneGuidance==='string'?r.toneGuidance:(r.toneGuidance||'');
+
+  // Salary fit, location fit, application context — new contextual fields
+  const ctxSection = document.getElementById('context-section');
+  if (ctxSection) {
+    const parts = [];
+    if (r.salaryFit)        parts.push({ label: 'Compensation', val: r.salaryFit });
+    if (r.locationFit)      parts.push({ label: 'Location / Remote', val: r.locationFit });
+    if (r.applicationContext) parts.push({ label: 'Role Context', val: r.applicationContext });
+    if (parts.length > 0 && S.mode === 'targeted') {
+      ctxSection.innerHTML = parts.map(p =>
+        `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--paper3)">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);width:130px;flex-shrink:0;padding-top:1px">${p.label}</div>
+          <div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(typeof p.val === 'string' ? p.val : JSON.stringify(p.val))}</div>
+        </div>`
+      ).join('');
+      ctxSection.classList.remove('hidden');
+    } else {
+      ctxSection.classList.add('hidden');
+    }
+  }
+
+  // Evidence map
+  const evSection = document.getElementById('evidence-section');
+  const evMap = document.getElementById('evidence-map');
+  if (r.evidenceMap && r.evidenceMap.length > 0 && S.mode==='targeted') {
+    // Normalise evidenceMap — API may return strings or objects
+    const normEv = r.evidenceMap.map(e => {
+      if (typeof e === 'string') return {jdRequirement: e, candidateProof: ''};
+      if (typeof e === 'object' && e !== null) return {
+        jdRequirement: String(e.jdRequirement || e.requirement || e.jd || ''),
+        candidateProof: String(e.candidateProof || e.proof || e.candidate || '')
+      };
+      return {jdRequirement: String(e||''), candidateProof: ''};
+    }).filter(e => e.jdRequirement);
+    evMap.innerHTML = normEv.map(e =>
+      `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px">
+        <div style="padding:9px 12px;background:var(--paper2);font-size:12px;color:var(--ink2);border-right:1px solid var(--border)"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);display:block;margin-bottom:3px">JD Requires</span>${esc(e.jdRequirement)}</div>
+        <div style="padding:9px 12px;background:#fff;font-size:12px;color:var(--ink2)"><span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--green);display:block;margin-bottom:3px">You Have</span>${esc(e.candidateProof)}</div>
+      </div>`
+    ).join('');
+    if (!normEv.length) { evSection.classList.add('hidden'); }
+    evSection.classList.remove('hidden');
+  } else {
+    evSection.classList.add('hidden');
+  }
+
+  // Winning angles
+  const winSection = document.getElementById('winning-section');
+  const winAngles = document.getElementById('winning-angles');
+  if (r.winningAngles && r.winningAngles.length > 0 && S.mode==='targeted') {
+    // Normalise winningAngles — API may return strings or objects
+    const normWin = r.winningAngles
+      .map(a => typeof a === 'string' ? a : (a && typeof a === 'object') ? String(a.angle || a.text || a.description || JSON.stringify(a)) : String(a||''))
+      .filter(a => a.trim());
+    winAngles.innerHTML = normWin.map((a,i) =>
+      `<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;background:${i%2===0?'var(--amber-bg)':'#fff'};border:1px solid var(--amber-border);border-radius:4px;margin-bottom:8px">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${i+1}</div>
+        <div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(a)}</div>
+      </div>`
+    ).join('');
+    if (!normWin.length) { winSection.classList.add('hidden'); }
+    winSection.classList.remove('hidden');
+  } else {
+    winSection.classList.add('hidden');
+  }
+
+  // Positioning angle
+  const posEl = document.getElementById('positioning-angle-section');
+  if (posEl && r.positioningAngle && S.mode==='targeted') {
+    const pa = typeof r.positioningAngle==='object' && r.positioningAngle ? r.positioningAngle : {};
+    const rows = [
+      pa.headline  && {l:'Headline',         v:pa.headline},
+      pa.summary   && {l:'Summary',           v:pa.summary},
+      pa.leadWith  && {l:'Lead With',         v:pa.leadWith},
+      pa.compress  && {l:'Compress',          v:pa.compress},
+      pa.cut       && {l:'Cut for This Role', v:pa.cut},
+    ].filter(Boolean);
+    if (rows.length) {
+      posEl.innerHTML = '<div class="section-head" style="margin-bottom:8px">Positioning Angle</div>' +
+        rows.map(row=>`<div style="display:grid;grid-template-columns:140px 1fr;border-bottom:1px solid var(--paper3);padding:9px 0"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)">${row.l}</div><div style="font-size:13px;color:var(--ink2);line-height:1.6">${esc(typeof row.v==='string'?row.v:JSON.stringify(row.v))}</div></div>`).join('');
+      posEl.classList.remove('hidden');
+    } else posEl.classList.add('hidden');
+  } else if (posEl) posEl.classList.add('hidden');
+
+  // Gap analysis
+  const gapEl = document.getElementById('gap-section');
+  if (gapEl && S.mode==='targeted') {
+    const gC=[
+      {k:'disqualifyingGaps', l:'Disqualifying Gaps', c:'var(--red-text)', bg:'var(--red-bg)',   b:'var(--red-border)'},
+      {k:'seriousDomainGaps', l:'Serious Domain Gaps',c:'var(--amber)',    bg:'var(--amber-bg)', b:'var(--amber-border)'},
+      {k:'interviewRisks',    l:'Interview Risks',    c:'var(--blue)',     bg:'var(--blue-bg)',  b:'var(--blue-border)'},
+      {k:'positioningGaps',   l:'Positioning Gaps',   c:'var(--ink3)',     bg:'var(--paper2)',   b:'var(--paper3)'},
+      {k:'minorGaps',         l:'Minor Gaps',         c:'var(--green)',    bg:'var(--green-bg)', b:'var(--green-border)'},
+      // legacy field names — kept for backward compatibility with older cached results
+      {k:'fatalGaps',         l:'Disqualifying Gaps', c:'var(--red-text)', bg:'var(--red-bg)',   b:'var(--red-border)'},
+      {k:'rampableGaps',      l:'Rampable Gaps',      c:'var(--green)',    bg:'var(--green-bg)', b:'var(--green-border)'},
+    ];
+    const hasG=gC.some(g=>Array.isArray(r[g.k])?r[g.k].length>0:!!r[g.k]);
+    if (hasG) {
+      gapEl.innerHTML='<div class="section-head" style="margin-bottom:8px">Gap Analysis</div>'+gC.filter(g=>Array.isArray(r[g.k])?r[g.k].length>0:!!r[g.k]).map(g=>{const it=Array.isArray(r[g.k])?r[g.k]:[r[g.k]];return`<div style="border:1px solid ${g.b};border-radius:4px;padding:10px 14px;margin-bottom:8px;background:${g.bg}"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:${g.c};margin-bottom:6px">${g.l}</div>${it.map(i=>`<div style="font-size:12.5px;color:var(--ink2);line-height:1.6;margin-bottom:3px">• ${esc(typeof i==='string'?i:JSON.stringify(i))}</div>`).join('')}</div>`;}).join('');
+      gapEl.classList.remove('hidden');
+    } else gapEl.classList.add('hidden');
+  } else if (gapEl) gapEl.classList.add('hidden');
+
+  // Recruiter + HM view
+  const rhmEl = document.getElementById('rhm-section');
+  if (rhmEl && S.mode==='targeted') {
+    const rv=typeof r.recruiterView==='string'?r.recruiterView:'';
+    const hv=typeof r.hiringManagerView==='string'?r.hiringManagerView:'';
+    if (rv||hv) {
+      rhmEl.innerHTML='<div class="section-head" style="margin-bottom:8px">Recruiter &amp; Hiring Manager View</div>'+[rv&&`<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-bottom:4px">Recruiter</div><div style="font-size:13px;color:var(--ink2);line-height:1.75">${esc(rv)}</div></div>`,hv&&`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);margin-bottom:4px">Hiring Manager</div><div style="font-size:13px;color:var(--ink2);line-height:1.75">${esc(hv)}</div></div>`].filter(Boolean).join('');
+      rhmEl.classList.remove('hidden');
+    } else rhmEl.classList.add('hidden');
+  } else if (rhmEl) rhmEl.classList.add('hidden');
+
+  // Final recommendation + fit classification
+  const recEl = document.getElementById('recommendation-section');
+  if (recEl && S.mode==='targeted') {
+    const rec = typeof r.finalRecommendation === 'string' ? r.finalRecommendation : '';
+    const fit = typeof r.fitClassification === 'string' ? r.fitClassification : '';
+    if (rec || fit) {
+      const recColor = rec.includes('Strong') ? 'var(--green)' : rec.includes('tailoring') ? 'var(--blue)' : rec.includes('referral') ? 'var(--amber)' : rec.includes('Do not') ? 'var(--red-text)' : 'var(--ink2)';
+      const fitColor = fit === 'core fit' ? 'var(--green)' : fit === 'adjacent fit' ? 'var(--blue)' : fit === 'stretch fit' ? 'var(--amber)' : fit === 'poor fit' ? 'var(--red-text)' : 'var(--ink2)';
+      recEl.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        ${rec ? `<div style="font-size:15px;font-weight:700;color:${recColor};font-family:var(--serif)">${esc(rec)}</div>` : ''}
+        ${fit ? `<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:${fitColor};padding:3px 10px;border:1px solid ${fitColor};border-radius:3px">${esc(fit)}</div>` : ''}
+      </div>`;
+      recEl.classList.remove('hidden');
+    } else recEl.classList.add('hidden');
+  } else if (recEl) recEl.classList.add('hidden');
+
+  // Referral-adjusted rationale display
+  const refEl = document.getElementById('referral-section');
+  if (refEl && S.mode==='targeted') {
+    const rar = typeof r.atsReferralRationale === 'string' ? r.atsReferralRationale : '';
+    const rrr = typeof r.recruiterReferralRationale === 'string' ? r.recruiterReferralRationale : '';
+    if (rar || rrr) {
+      refEl.innerHTML = '<div class="section-head" style="margin-bottom:8px">Referral-Adjusted View</div>' + [
+        rar && `<div style="margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)">ATS</span> <span style="font-size:13px;color:var(--ink2)">${esc(rar)}</span></div>`,
+        rrr && `<div><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)">Recruiter</span> <span style="font-size:13px;color:var(--ink2)">${esc(rrr)}</span></div>`,
+      ].filter(Boolean).join('');
+      refEl.classList.remove('hidden');
+    } else refEl.classList.add('hidden');
+  } else if (refEl) refEl.classList.add('hidden');
+
+  const initialSel=getSelectedInputOutputs();
+  const defs=outputDefs(r.isExecLevel);
+
+  // Normalise clarifyingQuestions — model may return strings or objects
+  const rawQs = Array.isArray(r.clarifyingQuestions) ? r.clarifyingQuestions : [];
+  const normQs = rawQs
+    .map(q => {
+      if (typeof q === 'string') return q.trim();
+      if (q && typeof q === 'object') {
+        // Handle {question: '...'} or {text: '...'} or {q: '...'} shapes
+        return String(q.question || q.text || q.q || q.content || JSON.stringify(q)).trim();
+      }
+      return String(q || '').trim();
+    })
+    .filter(q => q.length > 0);
+
+  const hasQuestions = normQs.length > 0;
+  showMergeBtn();
+  const fit = S.mode==='targeted' ? fitLevel(r.combinedScore) : null;
+  const fitLabel = fit ? ` — Fit: ${fit.label} (${r.combinedScore}/100)` : '';
+
+  if (hasQuestions) {
+    const fitMsg = fit ? `<strong>Fit: ${fit.label} (${r.combinedScore}/100).</strong> ` : '';
+    document.getElementById('gate-msg').innerHTML =
+      fitMsg + 'A few optional questions could help sharpen the outputs. Answer what you can — or go straight to generation now.';
+    document.getElementById('q-list').innerHTML = normQs.map(q=>`<li>${esc(q)}</li>`).join('');
+    // Accumulate asked questions so re-analysis can exclude them
+    normQs.forEach(q => {
+      const sig = w => w.length > 2 && !['the','and','for','are','was','has','have','had','been','with','that','this','from','can','you','did','not','what','how','any','your','even','ever','through','would','about','there','their','which','were'].includes(w);
+      const qW = new Set(q.toLowerCase().split(/\W+/).filter(sig));
+      const isDupe = S.askedQuestions.some(prev => {
+        const pW = new Set(prev.toLowerCase().split(/\W+/).filter(sig));
+        const shared = [...qW].filter(w => pW.has(w)).length;
+        return shared >= 3 || (shared >= 1 && shared / Math.min(qW.size, pW.size) >= 0.45);
+      });
+      if (!isDupe) S.askedQuestions.push(q);
+    });
+    document.getElementById('gate-out-checks').innerHTML = checkboxesHTML(defs,'gate',initialSel);
+    document.getElementById('clarify-section').classList.remove('hidden');
+    document.getElementById('ready-section').classList.add('hidden');
+  } else {
+    document.getElementById('ready-msg').textContent = `Analysis complete${fitLabel}. Ready to generate.`;
+    document.getElementById('ready-out-checks').innerHTML = checkboxesHTML(defs,'ready',initialSel);
+    document.getElementById('ready-section').classList.remove('hidden');
+    document.getElementById('clarify-section').classList.add('hidden');
+  }
+}
+
+// ─── RENDER OUTPUTS ───────────────────────────────────────────────────────────
+function renderOutputs(outputs,defs) {
+  document.getElementById('phase-analysis').classList.add('hidden');
+  document.getElementById('phase-outputs').classList.remove('hidden');
+  setStep(4);
+
+  const tabDefs=[
+    {key:'masterResume',label:'Master Resume'},
+    {key:'tailoredResume',label:'Tailored Resume'},
+    {key:'whatToChange',label:'What to Change'},
+    {key:'linkedinUpdates',label:'LinkedIn Updates'},
+    {key:'execBio',label:'Executive Bio'},
+    {key:'pitchDeck',label:'Pitch Deck'},
+    {key:'changeLog',label:'Change Log'},
+    {key:'optionalImprovements',label:'Improvements'},
+  ];
+
+  const tabs=[],panels=[];
+  let first=true;
+  tabDefs.forEach(t=>{
+    if (!outputs[t.key]) return;
+    const act=first; first=false;
+    tabs.push(`<button class="tab ${act?'active':''}" onclick="switchTab('tp-${t.key}',this)">${t.label}</button>`);
+    if (t.key==='pitchDeck') {
+      const pitchText = outputs[t.key] || '';
+      const mwIdx = pitchText.indexOf('⚠️ METRICS WARNING:');
+      const cleanPitch = mwIdx > -1 ? pitchText.substring(0, mwIdx).trim() : pitchText;
+      const metricWarn = mwIdx > -1 ? pitchText.substring(mwIdx).trim() : '';
+      panels.push(`<div id="tp-pitchDeck" class="tab-panel ${act?'active':''}" style="${act?'':'display:none'}">
+        ${metricWarn ? `<div class="warn-box" style="margin-bottom:14px;font-size:12px;line-height:1.6">${esc(metricWarn)}</div>` : ''}
+        <div class="note-box" style="margin-bottom:14px;font-size:12px">
+          <strong>Use in Canva, PowerPoint, or Google Slides:</strong>
+          Copy the formatted content or download a Word document with each slide clearly laid out.
+        </div>
+        <div class="btn-row" style="margin-bottom:12px">
+          <button class="btn btn-accent" style="font-size:12px" onclick="copyForCanva(this)">📋 Copy for Canva / Slides</button>
+          <button class="btn btn-ghost" style="font-size:12px" onclick="downloadPitchDoc(this)">⬇ Download as Word Doc</button>
+        </div>
+        <pre class="output-pre" id="out-pitchDeck">${esc(cleanPitch)}</pre>
+      </div>`);
+    } else if (t.key === 'tailoredResume') {
+      // Split reasoning block from resume body
+      const raw = outputs[t.key] || '';
+      const delimResume    = '=== RESUME ===';
+      const delimDecisions = '=== TAILORING DECISIONS ===';
+      const resumeIdx    = raw.indexOf(delimResume);
+      const decisionsIdx = raw.indexOf(delimDecisions);
+      let reasoningHtml = '';
+      let resumeText = raw;
+      if (resumeIdx > -1) {
+        resumeText = raw.substring(resumeIdx + delimResume.length).trim();
+        if (decisionsIdx > -1) {
+          const decisionsRaw = raw.substring(decisionsIdx + delimDecisions.length, resumeIdx).trim();
+          const bulletLines = decisionsRaw.split('\n').filter(l => l.trim());
+          const bulletHtml = bulletLines.map(l => {
+            const clean = l.replace(/^[•\-\*]\s*/, '').trim();
+            return clean ? `<li style="margin-bottom:6px">${esc(clean)}</li>` : '';
+          }).join('');
+          reasoningHtml = `
+            <div class="note-box" style="margin-bottom:14px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;opacity:.7">Tailoring Decisions</div>
+              <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">${bulletHtml}</ul>
+            </div>`;
+        }
+      }
+      panels.push(`<div id="tp-tailoredResume" class="tab-panel ${act?'active':''}" style="${act?'':'display:none'}">
+        ${reasoningHtml}
+        <div class="btn-row" style="margin-bottom:10px">
+          <button class="btn btn-ghost" style="font-size:11.5px" data-copy="tailoredResume">Copy Resume</button>
+        </div>
+        <pre class="output-pre" id="out-tailoredResume">${esc(resumeText)}</pre>
+      </div>`);
+    } else {
+      panels.push(`<div id="tp-${t.key}" class="tab-panel ${act?'active':''}" style="${act?'':'display:none'}">
+        <div class="btn-row" style="margin-bottom:10px">
+          <button class="btn btn-ghost" style="font-size:11.5px" data-copy="${t.key}">Copy ${t.label}</button>
+        </div>
+        <pre class="output-pre" id="out-${t.key}">${esc(outputs[t.key])}</pre>
+      </div>`);
+    }
+  });
+
+  document.getElementById('out-tabs').innerHTML=tabs.join('');
+  document.getElementById('out-panels').innerHTML=panels.join('');
+  document.getElementById('regen-out-checks').innerHTML=checkboxesHTML(defs,'regen',null);
+  document.getElementById('out-panels').onclick=copyClickHandler;
+  // Show regen controls now that outputs exist
+  const rc = document.getElementById('regen-controls');
+  if (rc) rc.classList.remove('hidden');
+  const fgs = document.getElementById('first-gen-stop');
+  if (fgs) fgs.classList.add('hidden');
+  // Re-show merge button if answers exist (button is recreated by innerHTML above)
+  if (S.answers && S.answers.trim()) showMergeBtn();
+
+}
+
+function setStopBtnsVisible(visible) {
+  ['regen-stop-btn','first-gen-stop'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden', !visible);
+  });
+}
+
+// ─── COPY & EXPORT ────────────────────────────────────────────────────────────
+function copyClickHandler(e) {
+  const btn=e.target.closest('[data-copy]');
+  if (!btn) return;
+  const pre=document.getElementById('out-'+btn.getAttribute('data-copy'));
+  if (!pre) return;
+  const doFlash=()=>{
+    const orig=btn.textContent;
+    btn.textContent='✓ Copied';
+    btn.style.background='var(--green-bg)';btn.style.borderColor='var(--green-border)';btn.style.color='var(--green)';
+    setTimeout(()=>{btn.textContent=orig;btn.style.background='';btn.style.borderColor='';btn.style.color='';},2000);
+  };
+  navigator.clipboard.writeText(pre.textContent).then(doFlash).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=pre.textContent;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);doFlash();
+  });
+}
+
+function flashBtn(btn) {
+  if (!btn) return;
+  const orig=btn.textContent;
+  btn.textContent='✓ Copied';
+  btn.style.background='var(--green-bg)';btn.style.borderColor='var(--green-border)';btn.style.color='var(--green)';
+  setTimeout(()=>{btn.textContent=orig;btn.style.background='';btn.style.borderColor='';btn.style.color='';},2000);
+}
+
+function copyAll(btn) {
+  const o=S.outputs,parts=[];
+  if(o.masterResume)parts.push('=== MASTER RESUME ===\n\n'+o.masterResume);
+  if(o.tailoredResume)parts.push('=== TAILORED RESUME ===\n\n'+o.tailoredResume);
+  if(o.linkedinUpdates)parts.push('=== LINKEDIN UPDATES ===\n\n'+o.linkedinUpdates);
+  if(o.execBio)parts.push('=== EXECUTIVE BIO ===\n\n'+o.execBio);
+  if(o.pitchDeck)parts.push('=== PITCH DECK OUTLINE ===\n\n'+o.pitchDeck);
+  if(o.changeLog)parts.push('=== CHANGE LOG ===\n\n'+o.changeLog);
+  if(o.optionalImprovements)parts.push('=== OPTIONAL IMPROVEMENTS ===\n\n'+o.optionalImprovements);
+  navigator.clipboard.writeText(parts.join('\n\n\n')).then(()=>flashBtn(btn)).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=parts.join('\n\n\n');
+    ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);flashBtn(btn);
+  });
+}
+
+function exportMd() {
+  const o=S.outputs,a=S.analysis;
+  let md='# Career Positioning Agent — Output\n\n';
+  if(a&&S.mode==='targeted'){const f=fitLevel(a.combinedScore);md+=`## Fit Assessment\n- ATS: ${a.atsScore}/100\n- Recruiter: ${a.recruiterScore}/100\n- Hiring Manager: ${a.hiringManagerScore}/100\n- Combined: ${a.combinedScore}/100 (${f.label})\n\n`;}
+  else if(a&&S.mode==='polish'){md+=`## Quality Assessment\n- Completeness: ${a.completenessScore}/100\n- Tone: ${a.toneScore}/100\n- Impact Language: ${a.impactScore}/100\n- Metrics: ${a.metricsScore}/100\n\n`;}
+  if(a)md+=`## Positioning Strategy\n${a.positioningStrategy}\n\n`;
+  if(o.masterResume)md+=`## Master Resume\n\`\`\`\n${o.masterResume}\n\`\`\`\n\n`;
+  if(o.tailoredResume)md+=`## Tailored Resume\n\`\`\`\n${o.tailoredResume}\n\`\`\`\n\n`;
+  if(o.linkedinUpdates)md+=`## LinkedIn Updates\n${o.linkedinUpdates}\n\n`;
+  if(o.execBio)md+=`## Executive Bio\n${o.execBio}\n\n`;
+  if(o.pitchDeck)md+=`## Career Pitch Deck\n${o.pitchDeck}\n\n`;
+  if(o.changeLog)md+=`## Change Log\n${o.changeLog}\n\n`;
+  if(o.optionalImprovements)md+=`## Optional Improvements\n${o.optionalImprovements}\n`;
+  const blob=new Blob([md],{type:'text/markdown'});
+  const url=URL.createObjectURL(blob);
+  const a2=document.createElement('a');a2.href=url;a2.download='career-positioning-output.md';a2.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── PPTX DOWNLOAD ────────────────────────────────────────────────────────────
+// Formats pitch deck content for pasting into Canva or other design tools.
+// Produces slide-by-slide blocks with clear labels so each section
+// can be copy-pasted directly into individual text boxes.
+function copyForCanva(btn) {
+  const text = S.outputs.pitchDeck || '';
+  if (!text) return;
+
+  // Parse slide blocks from the output
+  const slideBlocks = text.split(/(?=SLIDE\s+\d+\s*[—-])/i).filter(s => s.trim());
+
+  const formatted = slideBlocks.map(block => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return '';
+
+    // First line is the slide header — make it visually prominent
+    const header = lines[0].replace(/^SLIDE\s+\d+\s*[—-]\s*/i, '').trim();
+    const content = lines.slice(1);
+
+    return [
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      header.toUpperCase(),
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      ...content.map(l => l.replace(/^[•·\-–—*]+\s*/, '').trim()),
+      ''
+    ].join('\n');
+  }).join('\n');
+
+  const canvaNote = [
+    'CAREER PITCH DECK — Content for Canva',
+    'Copy each section into the corresponding slide text box.',
+    '═══════════════════════════════════════',
+    '',
+    formatted
+  ].join('\n');
+
+  navigator.clipboard.writeText(canvaNote)
+    .then(() => { if (btn) flashBtn(btn); })
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = canvaNote;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (btn) flashBtn(btn);
+    });
+}
+
+function downloadPitchDoc(btn) {
+  const text = S.outputs.pitchDeck || '';
+  if (!text) return;
+
+  // Strip metrics warning block before rendering
+  const mwIdx = text.indexOf('⚠️ METRICS WARNING:');
+  const cleanText = mwIdx > -1 ? text.substring(0, mwIdx).trim() : text;
+
+  // Split on SLIDE N — markers, keeping the marker text as the slide header
+  const rawBlocks = cleanText.split(/(?=SLIDE\s+\d+\s*[—\-])/i).filter(s => s.trim());
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  const slidePages = rawBlocks.map((block, i) => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    // First line is "SLIDE N — TITLE"
+    const headerMatch = lines[0] && lines[0].match(/^SLIDE\s+\d+\s*[—\-]\s*(.*)$/i);
+    const slideTitle = headerMatch ? headerMatch[1].trim() : (lines[0] || 'Slide ' + (i + 1));
+    const contentLines = lines.slice(1).map(l => l.replace(/^[•·\-–—*]+\s*/, '').trim()).filter(l => l.length > 1);
+
+    const bulletRows = contentLines.map(l =>
+      '<tr><td style="padding:7pt 0 7pt 14pt;font-size:12pt;font-family:Arial,sans-serif;color:#3d3a36;border:none;vertical-align:top">' +
+      '<span style="color:#b5451b;font-weight:bold;margin-right:8pt">&#9632;</span>' +
+      escHtml(l) + '</td></tr>'
+    ).join('');
+
+    return (
+      '<div style="page-break-after:always;width:100%;min-height:5in;padding:0.7in 0.8in 0.5in;box-sizing:border-box;background:#f5f2ed;position:relative">' +
+        '<div style="border-top:4pt solid #b5451b;padding-top:18pt;margin-bottom:18pt">' +
+          '<div style="font-size:9pt;font-family:Arial,sans-serif;color:#6b6660;margin-bottom:6pt;text-transform:uppercase;letter-spacing:1pt">SLIDE ' + (i + 1) + ' / ' + rawBlocks.length + '</div>' +
+          '<div style="font-family:Georgia,serif;font-size:22pt;font-weight:bold;color:#1a1714;line-height:1.2">' + escHtml(slideTitle) + '</div>' +
+          '<div style="width:1.2in;height:3pt;background:#b5451b;margin-top:10pt"></div>' +
+        '</div>' +
+        (contentLines.length > 0
+          ? '<table style="width:100%;border-collapse:collapse"><tbody>' + bulletRows + '</tbody></table>'
+          : '') +
+      '</div>'
+    );
+  });
+
+  const html = (
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<style>@page{size:landscape;margin:0}body{margin:0;padding:0;background:#fff}</style>' +
+    '</head><body>' +
+    slidePages.join('') +
+    '</body></html>'
+  );
+
+  const blob = new Blob([html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'career-pitch-deck.doc';
+  a.click();
+  URL.revokeObjectURL(url);
+  if (btn) flashBtn(btn);
+}
+
+// ─── MODE / LEVEL / TYPE ──────────────────────────────────────────────────────
+function setMode(m) {
+  S.mode=m;
+  document.getElementById('mode-targeted').classList.toggle('active',m==='targeted');
+  document.getElementById('mode-polish').classList.toggle('active',m==='polish');
+  document.getElementById('jd-block').classList.toggle('hidden',m==='polish');
+  document.getElementById('level-block').classList.toggle('hidden',m==='targeted');
+  // Master pitch deck input only useful in targeted mode
+  const mpb = document.getElementById('master-pitch-block');
+  if (mpb) mpb.classList.toggle('hidden', m==='polish');
+  const tag=document.getElementById('resume-opt-tag');
+  if(tag) tag.textContent=m==='targeted'?'(optional if About Me is provided)':'(optional)';
+  const atag=document.getElementById('about-opt-tag');
+  if(atag) atag.textContent=m==='targeted'?'(recommended — richer than a resume alone)':'(required — source of truth)';
+  const analyzeChk = document.getElementById('opt-analyze');
+  if (analyzeChk) analyzeChk.checked = (m === 'targeted');
+  updateOutputOptions();
+}
+function setLevel(l,el) {
+  S.level=l;
+  document.querySelectorAll('.level-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  updateOutputOptions();
+}
+function setType(t,el) {
+  S.type=t;
+  document.querySelectorAll('.type-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function updateOutputOptions() {
+  const isTargeted=S.mode==='targeted';
+  const isExecPolish=!isTargeted&&EXEC_LEVELS.includes(S.level);
+  const infoBox=document.getElementById('outputs-info-box');
+  infoBox.textContent=isTargeted
+    ?'Role mode: choose a full tailored resume or a lighter edit guide. Executive bio and pitch deck also available.'
+    :'Polish mode: master resume, LinkedIn profile, and master pitch deck. Executive Bio available for Director and above.';
+  infoBox.classList.remove('hidden');
+  document.getElementById('exec-info').classList.toggle('hidden',!isExecPolish);
+
+  // Re-render checkboxes with correct defaults
+  const checks=document.getElementById('output-checkboxes');
+  const defs=outputDefs(isExecPolish);
+  checks.innerHTML=checkboxesHTML(defs,'out',null);
+}
+
+// ─── FILE UPLOAD ──────────────────────────────────────────────────────────────
+async function handleFile() {
+  const file=document.getElementById('li-file').files[0];
+  if(!file)return;
+  document.getElementById('li-file-label').textContent=file.name;
+  document.getElementById('li-zone').classList.add('has-file');
+  if(file.type==='text/plain'){
+    document.getElementById('li-text').value=await file.text();
+  } else if(file.type==='application/pdf'){
+    const b64=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=()=>rej(new Error('read failed'));r.readAsDataURL(file);});
+    try {
+      const txt=await callAPI([{role:'user',content:[
+        {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+        {type:'text',text:'Extract all text. Return extracted text only.'}
+      ]}],2000,MODEL_FAST,null);
+      document.getElementById('li-text').value=txt;
+    } catch(e){
+      document.getElementById('li-text').value='[PDF extraction failed — please paste LinkedIn profile text manually]';
+    }
+  }
+  invalidateCache();
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function friendlyError(msg) {
+  if (!msg) return 'An unexpected error occurred. Please try again.';
+  if (msg.startsWith('AUTH_ERROR:'))    return msg.replace('AUTH_ERROR: ','');
+  if (msg.startsWith('ACCESS_ERROR:')) return msg.replace('ACCESS_ERROR: ','');
+  if (msg.startsWith('ANALYSIS_PARSE_ERROR:') || msg.includes('JSON') || msg.includes('parse failed')) {
+    return 'The analysis model returned a malformed response — this sometimes happens with complex role descriptions. Please try again. If it keeps failing, enable Concise mode to reduce output size.';
+  }
+  if (msg.includes('Max retries') || msg.includes('Rate limited')) {
+    return 'Rate limit reached. Wait 30 seconds then try again, or enable Concise mode to reduce token usage.';
+  }
+  if (msg.includes('fetch') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+    return 'Network error: unable to reach the Anthropic API. Make sure you are running this as a Claude artifact inside Claude.ai.';
+  }
+  return msg;
+}
+
+function fitLevel(s) {
+  // Thresholds match analysis prompt calibration: 50=weak, 65=moderate, 75=good, 85+=strong
+  if (s >= 85) return { label:'Strong',   color:'#22c55e' };
+  if (s >= 75) return { label:'Good',     color:'#84cc16' };
+  if (s >= 65) return { label:'Moderate', color:'#f59e0b' };
+  return             { label:'Weak',     color:'#ef4444' };
+}
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const el=document.getElementById(id);el.classList.add('active');el.style.display='block';
+  btn.classList.add('active');
+}
+function setStep(n) {
+  [1,2,3,4].forEach(i => {
+    const el = document.getElementById('step-'+i);
+    if (!el) return;
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+}
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+function showErrEl(el,msg){
+  if (!el) { console.error('showErrEl: null element, msg=',msg); return; }
+  el.textContent=msg; el.classList.remove('hidden');
+}
+function hideErr(id){const el=document.getElementById(id);if(el)el.classList.add('hidden');}
+function setBtn(id,dis){const el=document.getElementById(id);if(el)el.disabled=dis;}
+function esc(s){return(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function resetAll(){
+  Object.assign(S,{mode:'targeted',level:'',type:'',role:'',about:'',resume:'',linkedin:'',masterPitch:'',pitchPositioning:'',analysis:null,answers:'',askedQuestions:[],factInventory:null,outputs:{}});
+  invalidateCache();
+  ['role-input','about-input','resume-input','li-text','master-pitch-input','pitch-positioning-input'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('li-file-label').textContent='Upload PDF or .txt export';
+  document.getElementById('li-zone').classList.remove('has-file');
+  document.getElementById('phase-inputs').classList.remove('hidden');
+  document.getElementById('phase-analysis').classList.add('hidden');
+  document.getElementById('phase-outputs').classList.add('hidden');
+  document.getElementById('opt-analyze').checked=true;
+  document.getElementById('opt-concise').checked=false;
+  document.querySelectorAll('.level-pill,.type-pill').forEach(p=>p.classList.remove('active'));
+  if (_abortCtrl) { _abortCtrl.abort(); _abortCtrl = null; }
+  const rc = document.getElementById('regen-controls');
+  if (rc) rc.classList.add('hidden');
+  const mb = document.getElementById('merge-btn'); if (mb) mb.classList.add('hidden');
+  _useSequential = false; // reset tier detection on new session
+  const ha = document.getElementById('hdr-save-answers-btn'); if (ha) ha.classList.add('hidden');
+  hideErr('input-error');
+  setMode('targeted');
+  setStep(1);
+  // Re-load saved profile into fields silently — no prompt needed
+  autoLoadProfile();
+}
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'career-agent-profile';
+
+async function saveProfile(btn) {
+  const data = {
+    about:    document.getElementById('about-input').value.trim(),
+    resume:   document.getElementById('resume-input').value.trim(),
+    linkedin: document.getElementById('li-text').value.trim(),
+    answers:  S.answers || '',
+    savedAt:  new Date().toISOString()
+  };
+  if (!data.about && !data.resume && !data.linkedin) {
+    showNotice('Nothing to save — fill in at least one field first.', 'warn'); return;
+  }
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(data));
+    showStorageBar(data, false);
+    showNotice('Profile saved. It will load automatically next session.', 'ok');
+    if (btn) flashBtn(btn);
+  } catch(e) {
+    showNotice('Save failed: '+e.message, 'warn');
+  }
+}
+
+async function loadProfile() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (!result) { showNotice('No saved profile found.', 'warn'); return; }
+    const data = JSON.parse(result.value);
+    if (data.about)    document.getElementById('about-input').value   = data.about;
+    if (data.resume)   document.getElementById('resume-input').value  = data.resume;
+    if (data.linkedin) document.getElementById('li-text').value       = data.linkedin;
+    if (data.answers) S.answers = data.answers;
+    showStorageBar(data, false);
+    if (data.answers && data.answers.trim()) { showMergeBtn(); showNotice('Previous answers restored. Use Save Answers to absorb them into About Me.', 'ok'); }
+    else showNotice('Profile loaded from '+ fmtDate(data.savedAt)+'.', 'ok');
+  } catch(e) {
+    showNotice('Load failed: '+e.message, 'warn');
+  }
+}
+
+async function clearProfile() {
+  if (!confirm('Clear your saved profile and all entered materials? This cannot be undone.')) return;
+  try {
+    if (window.storage) {
+      await window.storage.delete(STORAGE_KEY);
+    }
+    // Full state and UI reset — same as resetAll but also wipes storage
+    resetAll();
+    // resetAll hides the storage bar — show a confirmation banner above the inputs instead
+    const banner = document.getElementById('clear-confirm-banner');
+    if (banner) {
+      banner.classList.remove('hidden');
+      setTimeout(() => banner.classList.add('hidden'), 6000);
+    }
+  } catch(e) {
+    alert('Clear failed: ' + e.message);
+  }
+}
+
+async function autoLoadProfile() {
+  // On startup: check if a saved profile exists and surface it non-intrusively
+  try {
+    const result = await window.storage.get(STORAGE_KEY);
+    if (!result) {
+      // No saved data — show the bar in "save" mode so user knows the option exists
+      showStorageBar(null, true);
+      return;
+    }
+    const data = JSON.parse(result.value);
+    // Auto-fill fields if they are currently empty
+    let loaded = 0;
+    if (data.about && !document.getElementById('about-input').value.trim()) {
+      document.getElementById('about-input').value = data.about; loaded++;
+    }
+    if (data.resume && !document.getElementById('resume-input').value.trim()) {
+      document.getElementById('resume-input').value = data.resume; loaded++;
+    }
+    if (data.linkedin && !document.getElementById('li-text').value.trim()) {
+      document.getElementById('li-text').value = data.linkedin; loaded++;
+    }
+    if (data.answers && !S.answers) S.answers = data.answers;
+    showStorageBar(data, false);
+    if (loaded > 0) {
+      const answerNote = data.answers ? ' Previous clarifying answers also restored.' : '';
+      // Only show notice if this was triggered by an explicit action, not silent reload
+      // (We skip the notice on quiet restart reload to avoid noise)
+    }
+    // Show answers header button if answers were restored
+    if (data.answers && data.answers.trim()) {
+      const hdrBtn = document.getElementById('hdr-save-answers-btn');
+      if (hdrBtn) hdrBtn.classList.remove('hidden');
+    }
+  } catch(e) {
+    // Distinguish corrupt stored data from storage being unavailable
+    if (e instanceof SyntaxError) {
+      // Stored profile data is corrupt — show bar in save mode and let user re-save
+      showStorageBar(null, true);
+      showNotice('Saved profile data could not be loaded (corrupt storage). Fill in your materials and save again.', 'warn');
+    } else {
+      // Storage not available (e.g. running outside Claude.ai) — show bar in save-only mode
+      showStorageBar(null, true);
+    }
+  }
+}
+
+function showStorageBar(data, saveOnly) {
+  const bar   = document.getElementById('storage-bar');
+  const label = document.getElementById('storage-label');
+  const sub   = document.getElementById('storage-sub');
+  const loadBtn = document.getElementById('load-btn');
+  bar.classList.remove('hidden','unsaved');
+  if (saveOnly || !data) {
+    bar.classList.add('unsaved');
+    label.textContent = 'Profile not saved';
+    sub.textContent   = 'Save your About Me, Resume, and LinkedIn so they load automatically next session.';
+    if (loadBtn) loadBtn.classList.add('hidden');
+  } else {
+    label.textContent = 'Profile saved';
+    const answerNote = data.answers ? ' Includes clarifying answers.' : '';
+    sub.textContent = 'Last saved '+fmtDate(data.savedAt)+'.'+answerNote;
+    if (loadBtn) loadBtn.classList.remove('hidden');
+  }
+}
+
+function showNotice(msg, type) {
+  const el = document.getElementById('storage-notice');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = (type === 'ok' ? 'note-box' : 'warn-box');
+  el.classList.remove('hidden');
+  // Warnings stay visible longer — errors and conflicts need to be read
+  const duration = type === 'ok' ? 5000 : 12000;
+  setTimeout(()=>el.classList.add('hidden'), duration);
+}
+
+function showMergeBtn() {
+  const hasAnswers = !!(S.answers && S.answers.trim());
+  const hdrBtn = document.getElementById('hdr-save-answers-btn');
+  if (hdrBtn) hdrBtn.classList.toggle('hidden', !hasAnswers);
+}
+
+async function saveAnswersToAboutMe(btn) {
+  if (!S.answers || !S.answers.trim()) {
+    showNotice('No answers to save yet — answer some clarifying questions first.', 'warn');
+    return;
+  }
+  // 1. Append answers to About Me field
+  const aboutEl = document.getElementById('about-input');
+  const current = aboutEl.value.trim();
+  const separator = current ? '\n\n--- ADDITIONAL CONTEXT (from clarifying questions) ---\n' : '';
+  const merged = current + separator + S.answers.trim();
+  aboutEl.value = merged;
+  S.about = merged;
+
+  // 2. Save profile WITH the answers still in S.answers (so it's persisted)
+  //    saveProfile reads S.answers directly
+  const saveData = {
+    about:   merged,
+    resume:  document.getElementById('resume-input').value.trim(),
+    linkedin:document.getElementById('li-text').value.trim(),
+    answers: S.answers,   // keep in storage so user can see what was saved
+    savedAt: new Date().toISOString()
+  };
+  let saved = false;
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(saveData));
+    saved = true;
+    showStorageBar(saveData, false);
+  } catch(e) {
+    showNotice('Answers added to About Me but save failed: ' + e.message, 'warn');
+  }
+
+  // 3. Now clear answers from state — they live in About Me now
+  S.answers = '';
+  invalidateCache();
+  showMergeBtn(); // hides the button since answers are now empty
+
+  // 4. Confirm to user with persistent alert (not just a notice that fades)
+  if (saved) {
+    // Flash the button before it hides — gives visual confirmation
+    if (btn) {
+      const orig = btn.textContent;
+      btn.style.background = 'rgba(45,106,79,0.8)';
+      btn.style.borderColor = 'rgba(45,106,79,0.9)';
+      btn.textContent = '✓ Saved to About Me';
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = '';
+        btn.style.borderColor = '';
+      }, 2500);
+    }
+    // Show persistent notice in materials section
+    showNotice('Answers added to About Me and profile saved. Scroll up to review your updated About Me.', 'ok');
+  }
+
+  // 5. If still on inputs phase, scroll to About Me
+  if (!document.getElementById('phase-inputs').classList.contains('hidden')) {
+    aboutEl.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function fmtDate(iso) {
+  if (!iso) return 'unknown date';
+  try {
+    return new Date(iso).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initAgent() {
+  updateOutputOptions();
+  autoLoadProfile(); // non-blocking — loads saved profile if available
+}
+initAgent();
+</script>
+</body>
+</html>
