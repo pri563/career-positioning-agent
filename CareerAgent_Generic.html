@@ -637,6 +637,17 @@ function ctxBlock() {
   return _ctxCache;
 }
 
+// Candidate materials as a cacheable system block. Marking this with
+// cache_control means the FIRST call in a run pays full price to write the
+// cache, and every subsequent call in the same run (the parallel output
+// calls, changelog, etc.) that sends this identical block up front gets it
+// at a steep discount instead of paying full input-token price again.
+// Must be byte-identical across calls to hit the cache, so build it once
+// from ctxBlock() (which is itself memoized via _ctxCache).
+function cachedMaterials() {
+  return { type: 'text', text: ctxBlock(), cache_control: { type: 'ephemeral' } };
+}
+
 // ─── FACT INVENTORY ──────────────────────────────────────────────────────────
 // Runs once before generation when both About Me and Resume are present.
 // Extracts a per-role structured fact list so ctxBlock() passes attributed facts
@@ -725,6 +736,13 @@ async function buildFactInventory() {
 const MODEL_FAST   = 'claude-haiku-4-5';  // analysis + changelog
 const MODEL_OUTPUT = 'claude-sonnet-4-6';    // resume + linkedin + bio outputs
 
+// systemPrompt may be:
+//   - a string (legacy) -> sent as-is, no caching
+//   - an array of {type:'text', text, cache_control?} blocks -> sent as-is.
+//     Blocks with cache_control:{type:'ephemeral'} tell the API to cache
+//     everything up to and including that block (~5 min TTL). Later blocks
+//     in the array can still vary per call without breaking the cache hit
+//     on the earlier, identical blocks.
 async function callAPI(messages, maxTokens, model, systemPrompt) {
   const body = { model, max_tokens:maxTokens, messages };
   if (systemPrompt) body.system = systemPrompt;
@@ -777,15 +795,16 @@ function isAbortError(e) {
 }
 
 async function callAnalysis(prompt) {
-  const txt = await callAPI(
-    [{role:'user',content:prompt}],
-    4000,
-    MODEL_FAST,
-    'Respond ONLY with a single valid JSON object. No markdown fences, no preamble. ' +
-    'CRITICAL: never use double-quote characters inside string values — rephrase to avoid them. ' +
-    'No newlines inside string values. All strings under 180 chars. ' +
-    'Arrays: evidenceMap max 5 items, winningAngles max 3, clarifyingQuestions max 3.'
-  );
+  const system = [
+    cachedMaterials(), // same cached block the output calls use — reused if analysis runs first
+    { type:'text', text:
+      'Respond ONLY with a single valid JSON object. No markdown fences, no preamble. ' +
+      'CRITICAL: never use double-quote characters inside string values — rephrase to avoid them. ' +
+      'No newlines inside string values. All strings under 180 chars. ' +
+      'Arrays: evidenceMap max 5 items, winningAngles max 3, clarifyingQuestions max 3.'
+    }
+  ];
+  const txt = await callAPI([{role:'user',content:prompt}], 4000, MODEL_FAST, system);
 
   // Strip fences and trim
   let raw = txt.replace(/\x60\x60\x60json[\n]?/g,'').replace(/\x60\x60\x60[\n]?/g,'').trim();
@@ -859,13 +878,16 @@ async function callAnalysis(prompt) {
 }
 
 async function callOutput(prompt, maxTokens, fast=false) {
-  return callAPI([{role:'user',content:prompt}], maxTokens, fast ? MODEL_FAST : MODEL_OUTPUT, STYLE);
+  // Materials block first (cached, identical across every output call this run),
+  // then STYLE (also identical across every output call — gets its own cache
+  // extension on top of the materials cache).
+  const system = [ cachedMaterials(), { type:'text', text: STYLE } ];
+  return callAPI([{role:'user',content:prompt}], maxTokens, fast ? MODEL_FAST : MODEL_OUTPUT, system);
 }
 
 // ─── ANALYSIS PROMPTS ─────────────────────────────────────────────────────────
 function analysisPrompt() {
   const isT = S.mode==='targeted';
-  const ctx = ctxBlock(); // build once, used in both branches
   const attrMap = S.factInventory && S.factInventory.roles && S.factInventory.roles.length > 0
     ? 'ROLE ATTRIBUTION MAP — every fact belongs to exactly one company. Do NOT mix facts across roles:\n' +
       S.factInventory.roles.map(r => '- ' + r.company + ' (' + r.dates + '): ' + r.title).join('\n') +
@@ -877,7 +899,7 @@ function analysisPrompt() {
 
 Do NOT do a surface-level keyword match. First infer the INTENT of the role, then compare the candidate's actual demonstrated experience against that intent.
 ${attrMap ? '\n' + attrMap + '\n' : ''}
-${ctx}
+(Candidate materials — About Me, resume, LinkedIn, target role, corrections — are provided in the system context above.)
 
 STEP 1 — ROLE INTENT: Identify the actual operating problem, success in 6-12 months, and classify each requirement:
 - True blocker: role cannot function without it
@@ -943,14 +965,13 @@ canProceed (true)`;
   } else {
     return `Assess quality of candidate materials for target level.
 TARGET LEVEL: ${S.level} | TYPE: ${S.type==='ic'?'IC':'Manager'}
-${ctx}
+(Candidate materials are provided in the system context above.)
 Return JSON keys: isExecLevel (${EXEC_LEVELS.includes(S.level)}), detectedLevel ("${S.level}"), detectedType ("${S.type}"), completenessScore (1-100), completenessNote (1 sentence), toneScore (1-100), toneNote (1 sentence), impactScore (1-100), impactNote (1 sentence), metricsScore (1-100), metricsNote (1 sentence), roleAnalysis (1-2 sentences), positioningStrategy (1-2 sentences), toneGuidance (1 sentence), clarifyingQuestions (two-step filter: (1) in materials — even partially or by implication? Any educational signal = do not ask about credentials. Skip if present. (2) materially changes output? if no, skip. Max 3. [] if none survive), canProceed (true)`;
   }
 }
 
 function reanalysisPrompt(priorScores) {
   const isT = S.mode === 'targeted';
-  const ctx = ctxBlock(); // build once, used in both branches
   const attrMap = S.factInventory && S.factInventory.roles && S.factInventory.roles.length > 0
     ? 'ROLE ATTRIBUTION MAP — every fact belongs to exactly one company. Do NOT mix facts across roles:\n' +
       S.factInventory.roles.map(r => '- ' + r.company + ' (' + r.dates + '): ' + r.title).join('\n') +
@@ -973,7 +994,7 @@ function reanalysisPrompt(priorScores) {
   if (isT) {
     return `Re-analyze candidate-role fit with updated context.
 ${attrMap ? attrMap+'\n\n' : ''}${prior ? '\n'+prior+'\n' : ''}
-${ctx}
+(Candidate materials, including any corrections, are provided in the system context above.)
 
 Return same JSON keys as initial analysis: atsScore, atsRationale, recruiterScore, recruiterRationale, hiringManagerScore, hiringManagerRationale, combinedScore, isExecLevel, detectedLevel, detectedType, roleAnalysis, salaryFit, locationFit, applicationContext, evidenceMap, winningAngles, positioningStrategy, toneGuidance, clarifyingQuestions (two-step filter: already in materials? skip. changes output? if no, skip. Never repeat asked questions. Max 3. [] if none survive), canProceed`;
   } else {
@@ -982,7 +1003,7 @@ TARGET LEVEL: ${S.level} | TYPE: ${S.type==='ic'?'IC':'Manager'}
 
 ${prior}
 
-${ctx}
+(Candidate materials, including any corrections, are provided in the system context above.)
 
 Reassess each dimension. Only lower a score if the answers reveal a real gap. Hold or raise scores where answers confirm or add detail.
 Return JSON keys: isExecLevel, detectedLevel, detectedType, completenessScore, completenessNote, toneScore, toneNote, impactScore, impactNote, metricsScore, metricsNote, roleAnalysis (1-2 sentences), positioningStrategy (1-2 sentences), toneGuidance (1 sentence), clarifyingQuestions (two-step filter: (1) in materials — even partially/by implication? Educational signal present = no credential questions. (2) materially changes output? if no, skip. Max 3 new. [] if none survive), canProceed (true)`;
@@ -1002,7 +1023,7 @@ ${isPolish?'POLISH MODE: include every role and achievement. Source for future t
 PAGE LIMIT: ${isPolish?'3 pages max':'2 pages max'}. Roles older than 10 years: one line (company, title, dates). Earlier: "Earlier Experience" — no bullets.
 POSITIONING: ${c.positioning}
 ${JOB_ATTR}
-${c.ctx}
+(Candidate materials — About Me, resume, LinkedIn, target role, corrections — are provided in the system context above.)
 Write a ${isPolish?'comprehensive base':'category master'} resume.
 Output format — use these exact delimiters, in this order:
 
@@ -1021,7 +1042,7 @@ ${TAILORING_RULES}
 PAGE LIMIT: 2 pages max. If content exceeds two pages, compress in this order: (1) shorten Earlier Experience entries first, (2) combine related bullets within the most recent prior role, (3) trim qualitative sentences in the current role that carry no metrics. Never drop a proof point category entirely to hit the page limit — compress within it.
 POSITIONING: ${c.positioning}
 ${JOB_ATTR}
-${c.ctx}
+(Candidate materials — About Me, resume, LinkedIn, target role, corrections — are provided in the system context above.)
 
 CORRECTIONS TAKE ABSOLUTE PRECEDENCE: If the context contains a "USER CORRECTIONS & CLARIFICATIONS" block, read it first and apply every correction before doing anything else. A correction is not a suggestion — it is a factual override. If it says a verb was wrong, change it everywhere it appears. If it says a bullet was inaccurate, rewrite it. If it says something should be removed, remove it. Do not soften, dilute, or partially apply corrections. Do not revert to the original after applying them.
 
@@ -1174,7 +1195,7 @@ function linkedinPrompt() {
 ${c.order}
 ${LI_RULES}
 POSITIONING: ${c.positioning}
-${c.ctx}
+(Candidate materials — About Me, resume, LinkedIn, target role, corrections — are provided in the system context above.)
 Write LinkedIn updates: HEADLINE, ABOUT, each EXPERIENCE [Company / Title], SKILLS, FEATURED.
 Show character count after each section. Apply over-limit rules precisely.
 Plain text only.`;
@@ -1184,7 +1205,7 @@ function execBioPrompt() {
   const c = promptCache();
   return `${c.voice}
 Executive mode: authentic gravitas. No confidential financials. Not a press release.
-${c.ctx}
+(Candidate materials are provided in the system context above.)
 SHORT BIO (~150 words): current role, one or two defining capabilities, education.
 
 LONG BIO (~330 words): career arc, expanded scope pattern, two or three specific capabilities with outcomes, education.
@@ -1220,7 +1241,7 @@ Personal career pitch deck for a senior audience — hiring managers, executive 
 ${isPolish ? 'POLISH MODE: this is a master pitch deck — evergreen, not tailored to one role.' : ''}
 LEVEL & TYPE FRAMING: ${levelFrame}
 ${positioningNote}
-${c.ctx}
+(Candidate materials are provided in the system context above.)
 
 FABRICATION RULE: every claim, metric, and achievement must come directly from the materials above. Do not invent or embellish.
 
@@ -1268,7 +1289,7 @@ ${c.order}
 ${c.execMode}
 ${ACCURACY_RULES}
 POSITIONING: ${c.positioning}
-${c.ctx}
+(Candidate materials — About Me, resume, LinkedIn, target role, corrections — are provided in the system context above.)
 ${S.answers ? 'CORRECTIONS TAKE ABSOLUTE PRECEDENCE: The USER CORRECTIONS block above contains factual overrides. Every correction must be reflected in your recommendations — flag each corrected item explicitly under the relevant section so the candidate sees exactly what changed and why.' : ''}
 Structured edit guide, section by section.
 For each section: KEEP (already strong), CUT (weakens or irrelevant), ADD/STRENGTHEN (missing or undersold), SUGGESTED LANGUAGE (ready-to-use replacement text).
